@@ -1,0 +1,205 @@
+import customtkinter as ctk
+import pyperclip
+from vault_storage import VaultManager
+from tkinter import messagebox
+
+# Configuration
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
+
+class HermitVaultApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("HermitVault - Secure Password Manager")
+        self.geometry("800x600")
+        
+        self.vault_manager = VaultManager()
+        
+        # Center the window
+        self.center_window()
+
+        # UI container
+        self.container = ctk.CTkFrame(self)
+        self.container.pack(fill="both", expand=True)
+
+        self.show_login_screen()
+
+    def center_window(self):
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def clear_container(self):
+        for widget in self.container.winfo_children():
+            widget.destroy()
+
+    def show_login_screen(self):
+        self.clear_container()
+        
+        exists = self.vault_manager.vault_exists()
+        title_text = "Unlock Your Vault" if exists else "Create Your Vault"
+        button_text = "Unlock" if exists else "Setup Vault"
+
+        frame = ctk.CTkFrame(self.container, corner_radius=15)
+        frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        ctk.CTkLabel(frame, text="🔒 HermitVault", font=("Outfit", 28, "bold")).pack(pady=(30, 10), padx=50)
+        ctk.CTkLabel(frame, text=title_text, font=("Outfit", 16)).pack(pady=(0, 20))
+
+        self.password_entry = ctk.CTkEntry(frame, placeholder_text="Master Password", show="*", width=300, height=45)
+        self.password_entry.pack(pady=10, padx=50)
+        self.password_entry.bind("<Return>", lambda e: self.on_login())
+
+        login_button = ctk.CTkButton(frame, text=button_text, command=self.on_login, width=300, height=45, font=("Outfit", 14, "bold"))
+        login_button.pack(pady=(20, 30))
+
+        if not exists:
+            ctk.CTkLabel(frame, text="Note: This password will be used to encrypt your vault.\nDon't lose it!", font=("Outfit", 11), text_color="gray").pack(pady=(0, 20))
+
+    def on_login(self):
+        password = self.password_entry.get()
+        if not password:
+            messagebox.showwarning("Empty Password", "Please enter a master password.")
+            return
+
+        if self.vault_manager.vault_exists():
+            if self.vault_manager.unlock_vault(password):
+                self.show_vault_screen()
+            else:
+                messagebox.showerror("Error", "Invalid Master Password")
+        else:
+            self.vault_manager.initialize_vault(password)
+            messagebox.showinfo("Success", "Vault created successfully!")
+            self.show_vault_screen()
+
+    def show_vault_screen(self):
+        self.clear_container()
+        
+        # Sidebar/Header
+        header = ctk.CTkFrame(self.container, height=80, corner_radius=0)
+        header.pack(fill="x", side="top")
+        
+        ctk.CTkLabel(header, text="🛡️ HermitVault", font=("Outfit", 24, "bold")).pack(side="left", padx=30, pady=20)
+        
+        add_btn = ctk.CTkButton(header, text="+ Add Credential", command=self.show_add_dialog, width=150, height=35, font=("Outfit", 13, "bold"))
+        add_btn.pack(side="right", padx=30, pady=20)
+
+        # Scrollable area
+        self.scroll_frame = ctk.CTkScrollableFrame(self.container, fg_color="transparent")
+        self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        self.refresh_vault_list()
+
+    def refresh_vault_list(self):
+        for widget in self.scroll_frame.winfo_children():
+            widget.destroy()
+
+        credentials = self.vault_manager.get_credentials()
+        
+        if not credentials:
+            ctk.CTkLabel(self.scroll_frame, text="No credentials saved yet.\nClick '+ Add Credential' to start.", font=("Outfit", 14), text_color="gray").pack(pady=100)
+            return
+
+        for i, cred in enumerate(credentials):
+            self.create_credential_card(i, cred)
+
+    def create_credential_card(self, index, cred):
+        card = ctk.CTkFrame(self.scroll_frame, height=80)
+        card.pack(fill="x", pady=5, padx=5)
+
+        # Info Layout
+        info_frame = ctk.CTkFrame(card, fg_color="transparent")
+        info_frame.pack(side="left", padx=20, fill="y")
+
+        ctk.CTkLabel(info_frame, text=cred['site'], font=("Outfit", 16, "bold"), anchor="w").pack(pady=(10, 0), fill="x")
+        ctk.CTkLabel(info_frame, text=f"User: {cred['user']}", font=("Outfit", 12), text_color="gray", anchor="w").pack(pady=(0, 10), fill="x")
+
+        # Actions Layout
+        actions_frame = ctk.CTkFrame(card, fg_color="transparent")
+        actions_frame.pack(side="right", padx=20)
+
+        copy_user_btn = ctk.CTkButton(actions_frame, text="Copy User", width=100, height=30, 
+                                     fg_color="#34495e", hover_color="#2c3e50",
+                                     command=lambda u=cred['user']: self.copy_to_clipboard(u, "Username"))
+        copy_user_btn.pack(side="left", padx=5)
+
+        copy_pass_btn = ctk.CTkButton(actions_frame, text="Copy Pass", width=100, height=30,
+                                     command=lambda p=cred['password']: self.copy_to_clipboard(p, "Password"))
+        copy_pass_btn.pack(side="left", padx=5)
+        
+        del_btn = ctk.CTkButton(actions_frame, text="🗑️", width=40, height=30, fg_color="#c0392b", hover_color="#a93226",
+                               command=lambda i=index: self.delete_credential(i))
+        del_btn.pack(side="left", padx=5)
+
+    def copy_to_clipboard(self, text, label):
+        pyperclip.copy(text)
+        # We could add a temporary label or toast here
+        print(f"{label} copied to clipboard!")
+
+    def delete_credential(self, index):
+        if messagebox.askyesno("Delete", "Are you sure you want to delete this credential?"):
+            self.vault_manager.delete_credential(index)
+            self.refresh_vault_list()
+
+    def show_add_dialog(self):
+        dialog = AddCredentialDialog(self)
+        self.wait_window(dialog)
+        self.refresh_vault_list()
+
+class AddCredentialDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.title("Add New Credential")
+        self.geometry("400x450")
+        self.resizable(False, False)
+        
+        # Make modal
+        self.transient(parent)
+        self.grab_set()
+        
+        self.setup_ui()
+        self.center_window()
+
+    def center_window(self):
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = self.parent.winfo_x() + (self.parent.winfo_width() // 2) - (width // 2)
+        y = self.parent.winfo_y() + (self.parent.winfo_height() // 2) - (height // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def setup_ui(self):
+        ctk.CTkLabel(self, text="New Credential", font=("Outfit", 20, "bold")).pack(pady=20)
+
+        self.site_entry = ctk.CTkEntry(self, placeholder_text="Website / Service (e.g. Google)", width=300, height=40)
+        self.site_entry.pack(pady=10)
+
+        self.user_entry = ctk.CTkEntry(self, placeholder_text="Username / Email", width=300, height=40)
+        self.user_entry.pack(pady=10)
+
+        self.pass_entry = ctk.CTkEntry(self, placeholder_text="Password", show="*", width=300, height=40)
+        self.pass_entry.pack(pady=10)
+
+        save_btn = ctk.CTkButton(self, text="Save Credential", command=self.save, width=300, height=45, font=("Outfit", 14, "bold"))
+        save_btn.pack(pady=30)
+
+    def save(self):
+        site = self.site_entry.get()
+        user = self.user_entry.get()
+        password = self.pass_entry.get()
+
+        if not all([site, user, password]):
+            messagebox.showwarning("Missing Info", "All fields are required.")
+            return
+
+        self.parent.vault_manager.add_credential(site, user, password)
+        self.destroy()
+
+if __name__ == "__main__":
+    app = HermitVaultApp()
+    app.mainloop()
