@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import pyperclip
 from vault_storage import VaultManager
+from crypto_logic import generate_secure_password
 from tkinter import messagebox
 
 # Configuration
@@ -155,8 +156,11 @@ class AddCredentialDialog(ctk.CTkToplevel):
         super().__init__(parent)
         self.parent = parent
         self.title("Add New Credential")
-        self.geometry("400x450")
+        self.geometry("450x650") # Increased height for generator
         self.resizable(False, False)
+        
+        # Generator state
+        self.show_gen_options = False
         
         # Make modal
         self.transient(parent)
@@ -176,17 +180,83 @@ class AddCredentialDialog(ctk.CTkToplevel):
     def setup_ui(self):
         ctk.CTkLabel(self, text="New Credential", font=("Outfit", 20, "bold")).pack(pady=20)
 
-        self.site_entry = ctk.CTkEntry(self, placeholder_text="Website / Service (e.g. Google)", width=300, height=40)
+        self.site_entry = ctk.CTkEntry(self, placeholder_text="Website / Service (e.g. Google)", width=350, height=40)
         self.site_entry.pack(pady=10)
 
-        self.user_entry = ctk.CTkEntry(self, placeholder_text="Username / Email", width=300, height=40)
+        self.user_entry = ctk.CTkEntry(self, placeholder_text="Username / Email", width=350, height=40)
         self.user_entry.pack(pady=10)
 
-        self.pass_entry = ctk.CTkEntry(self, placeholder_text="Password", show="*", width=300, height=40)
-        self.pass_entry.pack(pady=10)
+        # Password row with generate button
+        pass_frame = ctk.CTkFrame(self, fg_color="transparent")
+        pass_frame.pack(pady=10)
+        
+        self.pass_entry = ctk.CTkEntry(pass_frame, placeholder_text="Password", show="*", width=260, height=40)
+        self.pass_entry.pack(side="left", padx=(0, 10))
 
-        save_btn = ctk.CTkButton(self, text="Save Credential", command=self.save, width=300, height=45, font=("Outfit", 14, "bold"))
-        save_btn.pack(pady=30)
+        self.gen_toggle_btn = ctk.CTkButton(pass_frame, text="🧙", width=80, height=40, 
+                                           command=self.toggle_generator,
+                                           fg_color="#8e44ad", hover_color="#7d3c98")
+        self.gen_toggle_btn.pack(side="left")
+
+        # Generator Options Frame (initially hidden)
+        self.gen_frame = ctk.CTkFrame(self, border_width=1, border_color="#8e44ad")
+        
+        ctk.CTkLabel(self.gen_frame, text="Password Generator Settings", font=("Outfit", 12, "bold")).pack(pady=10)
+        
+        # Length
+        len_frame = ctk.CTkFrame(self.gen_frame, fg_color="transparent")
+        len_frame.pack(fill="x", padx=20)
+        ctk.CTkLabel(len_frame, text="Length:").pack(side="left")
+        self.len_slider = ctk.CTkSlider(len_frame, from_=8, to=32, number_of_steps=24, width=200)
+        self.len_slider.set(16)
+        self.len_slider.pack(side="right")
+        self.len_label = ctk.CTkLabel(len_frame, text="16")
+        self.len_label.pack(side="right", padx=10)
+        self.len_slider.configure(command=lambda v: self.len_label.configure(text=str(int(v))))
+
+        # Switches
+        self.upper_switch = ctk.CTkSwitch(self.gen_frame, text="Uppercase (A-Z)")
+        self.upper_switch.select()
+        self.upper_switch.pack(pady=5, padx=20, anchor="w")
+
+        self.num_switch = ctk.CTkSwitch(self.gen_frame, text="Numbers (0-9)")
+        self.num_switch.select()
+        self.num_switch.pack(pady=5, padx=20, anchor="w")
+
+        self.sym_switch = ctk.CTkSwitch(self.gen_frame, text="Symbols (!@#...)")
+        self.sym_switch.select()
+        self.sym_switch.pack(pady=5, padx=20, anchor="w")
+
+        self.do_gen_btn = ctk.CTkButton(self.gen_frame, text="Generate & Fill", 
+                                       command=self.generate_and_fill,
+                                       fg_color="#8e44ad", hover_color="#7d3c98")
+        self.do_gen_btn.pack(pady=15)
+
+        # Main Save Button
+        self.save_btn = ctk.CTkButton(self, text="Save Credential", command=self.save, width=350, height=45, font=("Outfit", 14, "bold"))
+        self.save_btn.pack(pady=30)
+
+    def toggle_generator(self):
+        if self.show_gen_options:
+            self.gen_frame.pack_forget()
+            self.show_gen_options = False
+        else:
+            self.gen_frame.pack(pady=10, padx=20, fill="x", before=self.save_btn)
+            self.show_gen_options = True
+
+    def generate_and_fill(self):
+        length = int(self.len_slider.get())
+        password = generate_secure_password(
+            length=length,
+            use_upper=self.upper_switch.get(),
+            use_digits=self.num_switch.get(),
+            use_symbols=self.sym_switch.get()
+        )
+        self.pass_entry.delete(0, 'end')
+        self.pass_entry.insert(0, password)
+        # Optionally show password briefly or just let user know
+        self.pass_entry.configure(show="")
+        self.after(2000, lambda: self.pass_entry.configure(show="*"))
 
     def save(self):
         site = self.site_entry.get()

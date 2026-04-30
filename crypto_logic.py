@@ -32,3 +32,18 @@ def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
 def generate_salt() -> bytes:
     """Generates a random 16-byte salt."""
     return os.urandom(16)
+
+def generate_secure_password(length: int = 16, use_upper: bool = True, use_digits: bool = True, use_symbols: bool = True) -> str:
+    """Generates a cryptographically strong random password."""
+    import secrets
+    import string
+    
+    alphabet = string.ascii_lowercase
+    if use_upper:
+        alphabet += string.ascii_uppercase
+    if use_digits:
+        alphabet += string.digits
+    if use_symbols:
+        alphabet += "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
