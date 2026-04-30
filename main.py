@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import pyperclip
 import os
-from PIL import Image
+from PIL import Image, ImageTk
 from vault_storage import VaultManager
 from crypto_logic import generate_secure_password, check_password_strength
 from tkinter import messagebox
@@ -48,12 +48,13 @@ class HermitVaultApp(ctk.CTk):
             self.logo_small = ctk.CTkImage(light_image=Image.open(self.logo_path),
                                           dark_image=Image.open(self.logo_path),
                                           size=(30, 30))
-            # Set window icon (try/except as it might fail on some OS/versions)
+            # Set window icon
             try:
                 img = Image.open(self.logo_path)
-                self.iconphoto(False, ctk.CTkImage(img)._light_image)
-            except:
-                pass
+                self.icon_photo = ImageTk.PhotoImage(img)
+                self.after(200, lambda: self.iconphoto(False, self.icon_photo))
+            except Exception as e:
+                print(f"Icon error: {e}")
         else:
             self.logo_img = None
             self.logo_small = None
