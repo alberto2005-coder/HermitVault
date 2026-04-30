@@ -51,15 +51,28 @@ class HermitVaultApp(ctk.CTk):
         ctk.CTkLabel(frame, text="🔒 HermitVault", font=("Outfit", 28, "bold")).pack(pady=(30, 10), padx=50)
         ctk.CTkLabel(frame, text=title_text, font=("Outfit", 16)).pack(pady=(0, 20))
 
-        self.password_entry = ctk.CTkEntry(frame, placeholder_text="Master Password", show="*", width=300, height=45)
-        self.password_entry.pack(pady=10, padx=50)
+        self.password_entry = ctk.CTkEntry(frame, placeholder_text="Master Password", show="*", width=250, height=45)
+        self.password_entry.pack(side="left", pady=10, padx=(50, 5))
         self.password_entry.bind("<Return>", lambda e: self.on_login())
+
+        self.eye_btn = ctk.CTkButton(frame, text="👁️", width=45, height=45, 
+                                     command=lambda: self.toggle_visibility(self.password_entry, self.eye_btn),
+                                     fg_color="transparent", hover_color="#34495e")
+        self.eye_btn.pack(side="left", pady=10, padx=(0, 50))
 
         login_button = ctk.CTkButton(frame, text=button_text, command=self.on_login, width=300, height=45, font=("Outfit", 14, "bold"))
         login_button.pack(pady=(20, 30))
 
         if not exists:
             ctk.CTkLabel(frame, text="Note: This password will be used to encrypt your vault.\nDon't lose it!", font=("Outfit", 11), text_color="gray").pack(pady=(0, 20))
+
+    def toggle_visibility(self, entry, button):
+        if entry.cget("show") == "*":
+            entry.configure(show="")
+            button.configure(text="👁️‍🗨️")
+        else:
+            entry.configure(show="*")
+            button.configure(text="👁️")
 
     def on_login(self):
         password = self.password_entry.get()
@@ -190,10 +203,15 @@ class AddCredentialDialog(ctk.CTkToplevel):
         pass_frame = ctk.CTkFrame(self, fg_color="transparent")
         pass_frame.pack(pady=10)
         
-        self.pass_entry = ctk.CTkEntry(pass_frame, placeholder_text="Password", show="*", width=260, height=40)
-        self.pass_entry.pack(side="left", padx=(0, 10))
+        self.pass_entry = ctk.CTkEntry(pass_frame, placeholder_text="Password", show="*", width=180, height=40)
+        self.pass_entry.pack(side="left", padx=(0, 5))
 
-        self.gen_toggle_btn = ctk.CTkButton(pass_frame, text="🧙", width=80, height=40, 
+        self.pass_eye_btn = ctk.CTkButton(pass_frame, text="👁️", width=40, height=40, 
+                                         command=lambda: self.toggle_visibility(self.pass_entry, self.pass_eye_btn),
+                                         fg_color="transparent", hover_color="#34495e")
+        self.pass_eye_btn.pack(side="left", padx=(0, 5))
+
+        self.gen_toggle_btn = ctk.CTkButton(pass_frame, text="🧙", width=40, height=40, 
                                            command=self.toggle_generator,
                                            fg_color="#8e44ad", hover_color="#7d3c98")
         self.gen_toggle_btn.pack(side="left")
@@ -256,6 +274,14 @@ class AddCredentialDialog(ctk.CTkToplevel):
         else:
             self.gen_frame.pack(pady=10, padx=20, fill="x", before=self.save_btn)
             self.show_gen_options = True
+
+    def toggle_visibility(self, entry, button):
+        if entry.cget("show") == "*":
+            entry.configure(show="")
+            button.configure(text="👁️‍🗨️")
+        else:
+            entry.configure(show="*")
+            button.configure(text="👁️")
 
     def generate_and_fill(self):
         length = int(self.len_slider.get())
