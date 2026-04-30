@@ -7,6 +7,7 @@
 ## ✨ Características Principales
 
 - **Seguridad "Zero Knowledge":** Tu contraseña maestra nunca se guarda. Se utiliza exclusivamente para derivar la clave de cifrado en memoria.
+- **Política de Seguridad Obligatoria:** La contraseña del Vault debe ser al menos de nivel **"Good"** (8+ caracteres, mayúsculas, minúsculas, números/símbolos) para poder inicializar la bóveda.
 - **Criptografía de Grado Militar:**
   - **KDF:** PBKDF2HMAC con SHA256 y **480,000 iteraciones**.
   - **Cifrado:** Fernet (AES-128 en modo CBC/GCM con HMAC para autenticación).

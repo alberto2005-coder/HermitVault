@@ -92,11 +92,31 @@ class HermitVaultApp(ctk.CTk):
                                      fg_color="transparent", hover_color="#34495e")
         self.eye_btn.pack(side="left")
 
+        # Master Strength Meter
+        self.m_strength_container = ctk.CTkFrame(frame, fg_color="transparent")
+        self.m_strength_container.pack(pady=(0, 10), padx=50, fill="x")
+        
+        self.m_strength_bar = ctk.CTkProgressBar(self.m_strength_container, width=200, height=6)
+        self.m_strength_bar.set(0)
+        self.m_strength_bar.pack(side="left", padx=(0, 10))
+        
+        self.m_strength_label = ctk.CTkLabel(self.m_strength_container, text="", font=("Outfit", 10))
+        self.m_strength_label.pack(side="left")
+        
+        self.password_entry.bind("<KeyRelease>", lambda e: self.update_master_strength_indicator())
+
         login_button = ctk.CTkButton(frame, text=button_text, command=self.on_login, width=300, height=45, font=("Outfit", 14, "bold"))
         login_button.pack(pady=(20, 30), padx=50)
 
         if not exists:
-            ctk.CTkLabel(frame, text="Note: This password will be used to encrypt your vault.\nDon't lose it!", font=("Outfit", 11), text_color="gray").pack(pady=(0, 20))
+            ctk.CTkLabel(frame, text="Note: Your password must be 'Good' or better.\n(8+ chars, upper, lower, numbers/symbols)", font=("Outfit", 11), text_color="gray").pack(pady=(0, 20))
+
+    def update_master_strength_indicator(self):
+        password = self.password_entry.get()
+        score, label, color = check_password_strength(password)
+        self.m_strength_bar.set(score / 4 if password else 0)
+        self.m_strength_bar.configure(progress_color=color)
+        self.m_strength_label.configure(text=label, text_color=color)
 
     def toggle_visibility(self, entry, button):
         if entry.cget("show") == "*":
@@ -118,6 +138,11 @@ class HermitVaultApp(ctk.CTk):
             else:
                 messagebox.showerror("Error", "Invalid Master Password")
         else:
+            score, label, _ = check_password_strength(password)
+            if score < 3:
+                messagebox.showwarning("Weak Password", f"Vault password is '{label}'. It must be at least 'Good' for your safety.")
+                return
+            
             self.vault_manager.initialize_vault(password)
             messagebox.showinfo("Success", "Vault created successfully!")
             self.show_vault_screen()

@@ -50,27 +50,41 @@ def generate_secure_password(length: int = 16, use_upper: bool = True, use_digit
 
 def check_password_strength(password: str) -> tuple[int, str, str]:
     """
-    Checks password strength and returns (score 0-4, label, color).
+    Checks password strength based on standard requirements.
+    Returns (score 0-4, label, color).
     """
     if not password:
         return 0, "Too Short", "#7f8c8d"
     
-    score = 0
-    if len(password) >= 8: score += 1
-    if len(password) >= 12: score += 1
-    if any(c.isupper() for c in password) and any(c.islower() for c in password): score += 1
-    if any(c.isdigit() for c in password) or any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password): score += 1
-    
     if len(password) < 8:
         return 0, "Too Short", "#e74c3c"
     
+    # Requirements
+    has_lower = any(c.islower() for c in password)
+    has_upper = any(c.isupper() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    has_symbol = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password)
+    
+    # Calculate score based on types
+    types_count = sum([has_lower, has_upper, has_digit, has_symbol])
+    
+    score = 0
+    if types_count == 1: score = 1
+    elif types_count == 2: score = 2
+    elif types_count == 3: score = 3
+    elif types_count == 4: score = 4
+    
+    # Boost score for length
+    if score > 0 and len(password) >= 14:
+        score = min(4, score + 1)
+
     strengths = {
-        0: ("Weak", "#e74c3c"),
+        0: ("Very Weak", "#e74c3c"),
         1: ("Weak", "#e74c3c"),
         2: ("Fair", "#f39c12"),
         3: ("Good", "#3498db"),
         4: ("Strong", "#2ecc71")
     }
     
-    label, color = strengths.get(score, ("Weak", "#e74c3c"))
+    label, color = strengths.get(score, ("Very Weak", "#e74c3c"))
     return score, label, color
