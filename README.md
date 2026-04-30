@@ -59,7 +59,7 @@ Estamos trabajando para hacer **HermitVault** aún más versátil. Próximamente
 - [ ] **Modo Claro / Oscuro:** Selector dinámico de temas dentro de la app.
 - [ ] **Traducción Multilingüe:** Soporte completo para Inglés y Español.
 - [ ] **Gestión de Bóveda:** Funciones para cambiar el nombre o la contraseña maestra de una bóveda existente.
-- [ ] **Exportación Segura:** Copia de seguridad cifrada de los datos.
+- [ ] **Exportación Segura:** Copia de seguridad cifrada de los datos, permitiendo importar y exportar en la app para poder pasar entre dispositivos un vaul entero.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
