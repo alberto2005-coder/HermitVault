@@ -7,16 +7,13 @@
 ## ✨ Características Principales
 
 - **Seguridad "Zero Knowledge":** Tu contraseña maestra nunca se guarda. Se utiliza exclusivamente para derivar la clave de cifrado en memoria.
-- **Política de Seguridad Obligatoria:** La contraseña del Vault debe ser al menos de nivel **"Good"** (8+ caracteres, mayúsculas, minúsculas, números/símbolos) para poder inicializar la bóveda.
-- **Criptografía de Grado Militar:**
-  - **KDF:** PBKDF2HMAC con SHA256 y **480,000 iteraciones**.
-  - **Cifrado:** Fernet (AES-128 en modo CBC/GCM con HMAC para autenticación).
-  - **Salt:** Generación de salt aleatorio único por bóveda.
-- **Interfaz Moderna:** Desarrollado con `CustomTkinter` para una experiencia visual premium en modo oscuro.
+- **Soporte Multi-Bóveda:** Crea y gestiona múltiples archivos de bóveda independientes para diferentes usuarios o propósitos.
+- **Política de Seguridad Obligatoria:** La contraseña del Vault debe ser al menos de nivel **"Good"** para inicializar la bóveda.
+- **Interfaz Premium Modernizada:** Diseño ultra-moderno con botones redondeados, barra lateral de navegación y estética "Deep Charcoal".
 - **🧙 Generador de Contraseñas:** Crea contraseñas aleatorias criptográficamente fuertes con longitud y caracteres personalizables.
-- **📊 Medidor de Fortaleza:** Validación en tiempo real de la seguridad de tus contraseñas manuales.
-- **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas con un solo clic.
-- **📋 Portapapeles Seguro:** Botones dedicados para copiar usuario/contraseña sin mostrarlos en pantalla.
+- **📊 Medidor de Fortaleza:** Validación en tiempo real con barras de progreso dinámicas.
+- **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
+- **📋 Portapapeles Seguro:** Botones rápidos para copiar credenciales sin exposición visual.
 
 ## 🛠️ Stack Tecnológico
 
@@ -55,6 +52,14 @@ Incluso si alguien obtiene acceso a tu archivo `.vault`, necesitaría romper 480
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+
+## 🛠️ Próximas Mejoras (Roadmap)
+
+Estamos trabajando para hacer **HermitVault** aún más versátil. Próximamente:
+- [ ] **Modo Claro / Oscuro:** Selector dinámico de temas dentro de la app.
+- [ ] **Traducción Multilingüe:** Soporte completo para Inglés y Español.
+- [ ] **Gestión de Bóveda:** Funciones para cambiar el nombre o la contraseña maestra de una bóveda existente.
+- [ ] **Exportación Segura:** Copia de seguridad cifrada de los datos.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
