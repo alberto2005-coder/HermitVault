@@ -47,3 +47,30 @@ def generate_secure_password(length: int = 16, use_upper: bool = True, use_digit
         alphabet += "!@#$%^&*()_+-=[]{}|;:,.<>?"
     
     return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+def check_password_strength(password: str) -> tuple[int, str, str]:
+    """
+    Checks password strength and returns (score 0-4, label, color).
+    """
+    if not password:
+        return 0, "Too Short", "#7f8c8d"
+    
+    score = 0
+    if len(password) >= 8: score += 1
+    if len(password) >= 12: score += 1
+    if any(c.isupper() for c in password) and any(c.islower() for c in password): score += 1
+    if any(c.isdigit() for c in password) or any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password): score += 1
+    
+    if len(password) < 8:
+        return 0, "Too Short", "#e74c3c"
+    
+    strengths = {
+        0: ("Weak", "#e74c3c"),
+        1: ("Weak", "#e74c3c"),
+        2: ("Fair", "#f39c12"),
+        3: ("Good", "#3498db"),
+        4: ("Strong", "#2ecc71")
+    }
+    
+    label, color = strengths.get(score, ("Weak", "#e74c3c"))
+    return score, label, color

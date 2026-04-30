@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import pyperclip
 from vault_storage import VaultManager
-from crypto_logic import generate_secure_password
+from crypto_logic import generate_secure_password, check_password_strength
 from tkinter import messagebox
 
 # Configuration
@@ -198,6 +198,19 @@ class AddCredentialDialog(ctk.CTkToplevel):
                                            fg_color="#8e44ad", hover_color="#7d3c98")
         self.gen_toggle_btn.pack(side="left")
 
+        # Strength Meter
+        self.strength_container = ctk.CTkFrame(self, fg_color="transparent")
+        self.strength_container.pack(pady=(0, 10), padx=50, fill="x")
+        
+        self.strength_bar = ctk.CTkProgressBar(self.strength_container, width=250, height=8)
+        self.strength_bar.set(0)
+        self.strength_bar.pack(side="left", padx=(0, 10))
+        
+        self.strength_label = ctk.CTkLabel(self.strength_container, text="", font=("Outfit", 11))
+        self.strength_label.pack(side="left")
+        
+        self.pass_entry.bind("<KeyRelease>", lambda e: self.update_strength_indicator())
+
         # Generator Options Frame (initially hidden)
         self.gen_frame = ctk.CTkFrame(self, border_width=1, border_color="#8e44ad")
         
@@ -254,9 +267,22 @@ class AddCredentialDialog(ctk.CTkToplevel):
         )
         self.pass_entry.delete(0, 'end')
         self.pass_entry.insert(0, password)
+        # Update strength meter
+        self.update_strength_indicator()
         # Optionally show password briefly or just let user know
         self.pass_entry.configure(show="")
         self.after(2000, lambda: self.pass_entry.configure(show="*"))
+
+    def update_strength_indicator(self):
+        password = self.pass_entry.get()
+        score, label, color = check_password_strength(password)
+        
+        # Update progress bar (score is 0-4, progress is 0.0-1.0)
+        self.strength_bar.set(score / 4 if password else 0)
+        self.strength_bar.configure(progress_color=color)
+        
+        # Update label
+        self.strength_label.configure(text=label, text_color=color)
 
     def save(self):
         site = self.site_entry.get()
