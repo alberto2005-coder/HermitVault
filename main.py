@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import pyperclip
+import os
+from PIL import Image
 from vault_storage import VaultManager
 from crypto_logic import generate_secure_password, check_password_strength
 from tkinter import messagebox
@@ -14,6 +16,9 @@ class HermitVaultApp(ctk.CTk):
 
         self.title("HermitVault - Secure Password Manager")
         self.geometry("800x600")
+        
+        # Load Logo
+        self.load_logo()
         
         self.vault_manager = VaultManager()
         
@@ -34,6 +39,25 @@ class HermitVaultApp(ctk.CTk):
         y = (self.winfo_screenheight() // 2) - (height // 2)
         self.geometry(f"+{x}+{y}")
 
+    def load_logo(self):
+        self.logo_path = "logo.png"
+        if os.path.exists(self.logo_path):
+            self.logo_img = ctk.CTkImage(light_image=Image.open(self.logo_path),
+                                        dark_image=Image.open(self.logo_path),
+                                        size=(60, 60))
+            self.logo_small = ctk.CTkImage(light_image=Image.open(self.logo_path),
+                                          dark_image=Image.open(self.logo_path),
+                                          size=(30, 30))
+            # Set window icon (try/except as it might fail on some OS/versions)
+            try:
+                img = Image.open(self.logo_path)
+                self.iconphoto(False, ctk.CTkImage(img)._light_image)
+            except:
+                pass
+        else:
+            self.logo_img = None
+            self.logo_small = None
+
     def clear_container(self):
         for widget in self.container.winfo_children():
             widget.destroy()
@@ -48,7 +72,10 @@ class HermitVaultApp(ctk.CTk):
         frame = ctk.CTkFrame(self.container, corner_radius=15)
         frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        ctk.CTkLabel(frame, text="🔒 HermitVault", font=("Outfit", 28, "bold")).pack(pady=(30, 10), padx=50)
+        if self.logo_img:
+            ctk.CTkLabel(frame, image=self.logo_img, text="").pack(pady=(30, 0))
+
+        ctk.CTkLabel(frame, text="HermitVault", font=("Outfit", 28, "bold")).pack(pady=(10, 10), padx=50)
         ctk.CTkLabel(frame, text=title_text, font=("Outfit", 16)).pack(pady=(0, 20))
 
         # Container for entry and eye button to keep them centered together
@@ -101,7 +128,11 @@ class HermitVaultApp(ctk.CTk):
         header = ctk.CTkFrame(self.container, height=80, corner_radius=0)
         header.pack(fill="x", side="top")
         
-        ctk.CTkLabel(header, text="🛡️ HermitVault", font=("Outfit", 24, "bold")).pack(side="left", padx=30, pady=20)
+        if self.logo_small:
+            ctk.CTkLabel(header, image=self.logo_small, text="").pack(side="left", padx=(30, 5), pady=20)
+            ctk.CTkLabel(header, text="HermitVault", font=("Outfit", 24, "bold")).pack(side="left", pady=20)
+        else:
+            ctk.CTkLabel(header, text="🛡️ HermitVault", font=("Outfit", 24, "bold")).pack(side="left", padx=30, pady=20)
         
         add_btn = ctk.CTkButton(header, text="+ Add Credential", command=self.show_add_dialog, width=150, height=35, font=("Outfit", 13, "bold"))
         add_btn.pack(side="right", padx=30, pady=20)
