@@ -21,12 +21,13 @@ class HermitVaultApp(ctk.CTk):
         super().__init__()
 
         self.title("HermitVault - Secure Password Manager")
-        self.geometry("800x600")
+        self.geometry("900x700")
         
         # Load Logo
         self.load_logo()
         
-        self.vault_manager = VaultManager()
+        self.current_vault_name = None
+        self.vault_manager = None
         
         # Center the window
         self.center_window()
@@ -73,96 +74,114 @@ class HermitVaultApp(ctk.CTk):
         self.clear_container()
         self.container.configure(fg_color=BG_COLOR)
         
-        exists = self.vault_manager.vault_exists()
-        title_text = "Unlock Vault" if exists else "Setup Your Vault"
-        button_text = "Unlock Now" if exists else "Create Secure Vault"
-
-        # Main login card (Glass-like effect)
+        # Get available vaults
+        vaults = VaultManager.list_available_vaults()
+        
+        # Main login card
         frame = ctk.CTkFrame(self.container, corner_radius=25, fg_color=CARD_COLOR, border_width=2, border_color="#333333")
         frame.place(relx=0.5, rely=0.5, anchor="center")
 
         if self.logo_img:
-            # Upsize logo slightly for login
-            login_logo = ctk.CTkImage(light_image=Image.open(self.logo_path),
-                                     dark_image=Image.open(self.logo_path),
-                                     size=(100, 100))
-            ctk.CTkLabel(frame, image=login_logo, text="").pack(pady=(40, 0))
+            ctk.CTkLabel(frame, image=self.logo_img, text="").pack(pady=(40, 0))
 
         ctk.CTkLabel(frame, text="HermitVault", font=("Outfit", 32, "bold"), text_color=TEXT_COLOR).pack(pady=(10, 5), padx=60)
-        ctk.CTkLabel(frame, text=title_text, font=("Outfit", 14), text_color=SECONDARY_TEXT).pack(pady=(0, 30))
-
-        # Container for entry and eye button
-        pass_container = ctk.CTkFrame(frame, fg_color="transparent")
-        pass_container.pack(pady=10, padx=60)
-
-        self.password_entry = ctk.CTkEntry(pass_container, placeholder_text="Master Password", show="*", 
-                                         width=280, height=50, font=("Outfit", 14),
-                                         border_color="#444444", fg_color="#1e1e1e")
-        self.password_entry.pack(side="left", padx=(0, 5))
-        self.password_entry.bind("<Return>", lambda e: self.on_login())
-
-        self.eye_btn = ctk.CTkButton(pass_container, text="👁️", width=50, height=50, 
-                                     command=lambda: self.toggle_visibility(self.password_entry, self.eye_btn),
-                                     fg_color="#333333", hover_color="#444444", font=("Outfit", 16))
-        self.eye_btn.pack(side="left")
-
-        # Master Strength Meter
-        self.m_strength_container = ctk.CTkFrame(frame, fg_color="transparent")
-        self.m_strength_container.pack(pady=(0, 20), padx=60, fill="x")
         
-        self.m_strength_bar = ctk.CTkProgressBar(self.m_strength_container, width=220, height=6, fg_color="#333333")
+        # Tabs for "Unlock" vs "Create"
+        self.tabview = ctk.CTkTabview(frame, width=400, height=350, fg_color="transparent", 
+                                     segmented_button_selected_color=ACCENT_COLOR,
+                                     segmented_button_unselected_hover_color="#333333")
+        self.tabview.pack(pady=10, padx=40)
+        
+        tab_unlock = self.tabview.add("Unlock Vault")
+        tab_create = self.tabview.add("New Vault")
+
+        # --- UNLOCK TAB ---
+        if not vaults:
+            ctk.CTkLabel(tab_unlock, text="No vaults found.\nGo to 'New Vault' to create one.", 
+                        font=("Outfit", 14), text_color=SECONDARY_TEXT).pack(pady=50)
+        else:
+            ctk.CTkLabel(tab_unlock, text="Select Vault:", font=("Outfit", 12)).pack(pady=(20, 5))
+            self.vault_select = ctk.CTkOptionMenu(tab_unlock, values=vaults, width=300, height=45, 
+                                                fg_color="#333333", button_color=ACCENT_COLOR, 
+                                                dropdown_fg_color=CARD_COLOR)
+            self.vault_select.pack(pady=10)
+            
+            self.password_entry = ctk.CTkEntry(tab_unlock, placeholder_text="Master Password", show="*", 
+                                             width=300, height=45, font=("Outfit", 14))
+            self.password_entry.pack(pady=10)
+            
+            ctk.CTkButton(tab_unlock, text="Unlock Vault", command=self.on_login, 
+                         width=300, height=50, font=("Outfit", 14, "bold"),
+                         fg_color=ACCENT_COLOR).pack(pady=20)
+
+        # --- CREATE TAB ---
+        ctk.CTkLabel(tab_create, text="Vault Name:", font=("Outfit", 12)).pack(pady=(20, 5))
+        self.new_vault_name = ctk.CTkEntry(tab_create, placeholder_text="e.g. Personal, Work", width=300, height=45)
+        self.new_vault_name.pack(pady=5)
+        
+        ctk.CTkLabel(tab_create, text="Master Password:", font=("Outfit", 12)).pack(pady=(10, 5))
+        self.new_vault_pass = ctk.CTkEntry(tab_create, placeholder_text="Must be 'Good' or better", show="*", width=300, height=45)
+        self.new_vault_pass.pack(pady=5)
+        
+        # Strength bar for new vault
+        self.m_strength_container = ctk.CTkFrame(tab_create, fg_color="transparent")
+        self.m_strength_container.pack(pady=(5, 10), fill="x", padx=10)
+        self.m_strength_bar = ctk.CTkProgressBar(self.m_strength_container, width=200, height=6, fg_color="#333333")
         self.m_strength_bar.set(0)
         self.m_strength_bar.pack(side="left", padx=(0, 10))
-        
-        self.m_strength_label = ctk.CTkLabel(self.m_strength_container, text="", font=("Outfit", 10), text_color=SECONDARY_TEXT)
+        self.m_strength_label = ctk.CTkLabel(self.m_strength_container, text="", font=("Outfit", 10))
         self.m_strength_label.pack(side="left")
         
-        self.password_entry.bind("<KeyRelease>", lambda e: self.update_master_strength_indicator())
+        self.new_vault_pass.bind("<KeyRelease>", lambda e: self.update_master_strength_indicator())
 
-        login_button = ctk.CTkButton(frame, text=button_text, command=self.on_login, 
-                                    width=340, height=55, font=("Outfit", 16, "bold"),
-                                    fg_color=ACCENT_COLOR, hover_color="#7d3c98")
-        login_button.pack(pady=(10, 40), padx=60)
-
-        if not exists:
-            ctk.CTkLabel(frame, text="Note: Your password must be 'Good' or better.\n(8+ chars, upper, lower, numbers/symbols)", 
-                        font=("Outfit", 11), text_color="#666666").pack(pady=(0, 30))
+        ctk.CTkButton(tab_create, text="Create Vault", command=self.on_create_vault, 
+                     width=300, height=50, font=("Outfit", 14, "bold"),
+                     fg_color=ACCENT_COLOR).pack(pady=20)
 
     def update_master_strength_indicator(self):
-        password = self.password_entry.get()
+        password = self.new_vault_pass.get()
         score, label, color = check_password_strength(password)
         self.m_strength_bar.set(score / 4 if password else 0)
         self.m_strength_bar.configure(progress_color=color)
         self.m_strength_label.configure(text=label, text_color=color)
 
-    def toggle_visibility(self, entry, button):
-        if entry.cget("show") == "*":
-            entry.configure(show="")
-            button.configure(text="👁️‍🗨️")
-        else:
-            entry.configure(show="*")
-            button.configure(text="👁️")
-
     def on_login(self):
+        vault_name = self.vault_select.get()
         password = self.password_entry.get()
+        
         if not password:
-            messagebox.showwarning("Empty Password", "Please enter a master password.")
+            messagebox.showwarning("Error", "Enter your password.")
             return
 
-        if self.vault_manager.vault_exists():
-            if self.vault_manager.unlock_vault(password):
-                self.show_vault_screen()
-            else:
-                messagebox.showerror("Error", "Invalid Master Password")
-        else:
-            score, label, _ = check_password_strength(password)
-            if score < 3:
-                messagebox.showwarning("Weak Password", f"Vault password is '{label}'. It must be at least 'Good' for your safety.")
-                return
-            
-            self.vault_manager.initialize_vault(password)
-            messagebox.showinfo("Success", "Vault created successfully!")
+        self.vault_manager = VaultManager(vault_name)
+        if self.vault_manager.unlock_vault(password):
+            self.current_vault_name = vault_name
             self.show_vault_screen()
+        else:
+            messagebox.showerror("Error", "Invalid Password.")
+
+    def on_create_vault(self):
+        name = self.new_vault_name.get().strip()
+        password = self.new_vault_pass.get()
+        
+        if not name or not password:
+            messagebox.showwarning("Error", "Name and password are required.")
+            return
+        
+        if name in VaultManager.list_available_vaults():
+            messagebox.showwarning("Error", "A vault with this name already exists.")
+            return
+
+        score, label, _ = check_password_strength(password)
+        if score < 3:
+            messagebox.showwarning("Weak Password", f"Password is '{label}'. It must be at least 'Good'.")
+            return
+
+        self.vault_manager = VaultManager(name)
+        self.vault_manager.initialize_vault(password)
+        self.current_vault_name = name
+        messagebox.showinfo("Success", f"Vault '{name}' created!")
+        self.show_vault_screen()
 
     def show_vault_screen(self):
         self.clear_container()
@@ -175,12 +194,18 @@ class HermitVaultApp(ctk.CTk):
         if self.logo_img:
             ctk.CTkLabel(sidebar, image=self.logo_img, text="").pack(pady=(40, 10))
         
-        ctk.CTkLabel(sidebar, text="HermitVault", font=("Outfit", 24, "bold")).pack(pady=(0, 40))
+        ctk.CTkLabel(sidebar, text=f"{self.current_vault_name.title()} Vault", font=("Outfit", 20, "bold")).pack(pady=(0, 40))
 
         add_btn = ctk.CTkButton(sidebar, text="+ Add New", command=self.show_add_dialog, 
                                width=180, height=45, font=("Outfit", 14, "bold"),
                                fg_color=ACCENT_COLOR, hover_color="#7d3c98")
-        add_btn.pack(pady=20)
+        add_btn.pack(pady=10)
+        
+        # Logout button
+        logout_btn = ctk.CTkButton(sidebar, text="🔒 Lock & Exit", command=self.show_login_screen,
+                                  width=180, height=45, font=("Outfit", 14),
+                                  fg_color="#333333", hover_color="#444444")
+        logout_btn.pack(pady=10)
         
         stats_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         stats_frame.pack(side="bottom", fill="x", pady=40)

@@ -5,13 +5,20 @@ from crypto_logic import derive_key, encrypt_data, decrypt_data, generate_salt
 VAULT_FILE = "vault.vault"
 
 class VaultManager:
-    def __init__(self):
+    def __init__(self, vault_name="vault"):
+        self.vault_name = vault_name
+        self.vault_file = f"{vault_name}.vault"
         self.salt = None
         self.key = None
         self.data = []
 
+    @staticmethod
+    def list_available_vaults():
+        """Returns a list of vault names found in the current directory."""
+        return [f[:-6] for f in os.listdir(".") if f.endswith(".vault")]
+
     def vault_exists(self):
-        return os.path.exists(VAULT_FILE)
+        return os.path.exists(self.vault_file)
 
     def initialize_vault(self, master_password):
         """Creates a new vault file with the master password."""
@@ -26,7 +33,7 @@ class VaultManager:
             return False
         
         try:
-            with open(VAULT_FILE, "rb") as f:
+            with open(self.vault_file, "rb") as f:
                 content = f.read()
                 self.salt = content[:16]
                 encrypted_payload = content[16:]
@@ -47,7 +54,7 @@ class VaultManager:
         json_data = json.dumps(self.data)
         encrypted_payload = encrypt_data(json_data, self.key)
         
-        with open(VAULT_FILE, "wb") as f:
+        with open(self.vault_file, "wb") as f:
             f.write(self.salt)
             f.write(encrypted_payload)
 
