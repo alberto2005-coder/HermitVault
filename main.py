@@ -184,8 +184,9 @@ class HermitVaultApp(ctk.CTk):
         
         stats_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         stats_frame.pack(side="bottom", fill="x", pady=40)
-        creds_count = len(self.vault_manager.get_credentials())
-        ctk.CTkLabel(stats_frame, text=f"{creds_count} items secured", font=("Outfit", 12), text_color=SECONDARY_TEXT).pack()
+        
+        self.stats_label = ctk.CTkLabel(stats_frame, text="", font=("Outfit", 12), text_color=SECONDARY_TEXT)
+        self.stats_label.pack()
 
         # Main Content Area
         content = ctk.CTkFrame(self.container, fg_color="transparent")
@@ -204,6 +205,9 @@ class HermitVaultApp(ctk.CTk):
             widget.destroy()
 
         credentials = self.vault_manager.get_credentials()
+        
+        # Update stats label
+        self.stats_label.configure(text=f"{len(credentials)} items secured")
         
         if not credentials:
             ctk.CTkLabel(self.scroll_frame, text="No credentials saved yet.\nClick '+ Add Credential' to start.", font=("Outfit", 14), text_color="gray").pack(pady=100)
