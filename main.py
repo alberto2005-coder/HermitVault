@@ -8,7 +8,13 @@ from tkinter import messagebox
 
 # Configuration
 ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
+
+# Premium Color Palette
+ACCENT_COLOR = "#8e44ad"  # Royal Purple
+BG_COLOR = "#1a1a1a"      # Deep Charcoal
+CARD_COLOR = "#252525"    # Lighter Grey for cards
+TEXT_COLOR = "#ffffff"
+SECONDARY_TEXT = "#b3b3b3"
 
 class HermitVaultApp(ctk.CTk):
     def __init__(self):
@@ -65,51 +71,62 @@ class HermitVaultApp(ctk.CTk):
 
     def show_login_screen(self):
         self.clear_container()
+        self.container.configure(fg_color=BG_COLOR)
         
         exists = self.vault_manager.vault_exists()
-        title_text = "Unlock Your Vault" if exists else "Create Your Vault"
-        button_text = "Unlock" if exists else "Setup Vault"
+        title_text = "Unlock Vault" if exists else "Setup Your Vault"
+        button_text = "Unlock Now" if exists else "Create Secure Vault"
 
-        frame = ctk.CTkFrame(self.container, corner_radius=15)
+        # Main login card (Glass-like effect)
+        frame = ctk.CTkFrame(self.container, corner_radius=25, fg_color=CARD_COLOR, border_width=2, border_color="#333333")
         frame.place(relx=0.5, rely=0.5, anchor="center")
 
         if self.logo_img:
-            ctk.CTkLabel(frame, image=self.logo_img, text="").pack(pady=(30, 0))
+            # Upsize logo slightly for login
+            login_logo = ctk.CTkImage(light_image=Image.open(self.logo_path),
+                                     dark_image=Image.open(self.logo_path),
+                                     size=(100, 100))
+            ctk.CTkLabel(frame, image=login_logo, text="").pack(pady=(40, 0))
 
-        ctk.CTkLabel(frame, text="HermitVault", font=("Outfit", 28, "bold")).pack(pady=(10, 10), padx=50)
-        ctk.CTkLabel(frame, text=title_text, font=("Outfit", 16)).pack(pady=(0, 20))
+        ctk.CTkLabel(frame, text="HermitVault", font=("Outfit", 32, "bold"), text_color=TEXT_COLOR).pack(pady=(10, 5), padx=60)
+        ctk.CTkLabel(frame, text=title_text, font=("Outfit", 14), text_color=SECONDARY_TEXT).pack(pady=(0, 30))
 
-        # Container for entry and eye button to keep them centered together
+        # Container for entry and eye button
         pass_container = ctk.CTkFrame(frame, fg_color="transparent")
-        pass_container.pack(pady=10)
+        pass_container.pack(pady=10, padx=60)
 
-        self.password_entry = ctk.CTkEntry(pass_container, placeholder_text="Master Password", show="*", width=250, height=45)
+        self.password_entry = ctk.CTkEntry(pass_container, placeholder_text="Master Password", show="*", 
+                                         width=280, height=50, font=("Outfit", 14),
+                                         border_color="#444444", fg_color="#1e1e1e")
         self.password_entry.pack(side="left", padx=(0, 5))
         self.password_entry.bind("<Return>", lambda e: self.on_login())
 
-        self.eye_btn = ctk.CTkButton(pass_container, text="👁️", width=45, height=45, 
+        self.eye_btn = ctk.CTkButton(pass_container, text="👁️", width=50, height=50, 
                                      command=lambda: self.toggle_visibility(self.password_entry, self.eye_btn),
-                                     fg_color="transparent", hover_color="#34495e")
+                                     fg_color="#333333", hover_color="#444444", font=("Outfit", 16))
         self.eye_btn.pack(side="left")
 
         # Master Strength Meter
         self.m_strength_container = ctk.CTkFrame(frame, fg_color="transparent")
-        self.m_strength_container.pack(pady=(0, 10), padx=50, fill="x")
+        self.m_strength_container.pack(pady=(0, 20), padx=60, fill="x")
         
-        self.m_strength_bar = ctk.CTkProgressBar(self.m_strength_container, width=200, height=6)
+        self.m_strength_bar = ctk.CTkProgressBar(self.m_strength_container, width=220, height=6, fg_color="#333333")
         self.m_strength_bar.set(0)
         self.m_strength_bar.pack(side="left", padx=(0, 10))
         
-        self.m_strength_label = ctk.CTkLabel(self.m_strength_container, text="", font=("Outfit", 10))
+        self.m_strength_label = ctk.CTkLabel(self.m_strength_container, text="", font=("Outfit", 10), text_color=SECONDARY_TEXT)
         self.m_strength_label.pack(side="left")
         
         self.password_entry.bind("<KeyRelease>", lambda e: self.update_master_strength_indicator())
 
-        login_button = ctk.CTkButton(frame, text=button_text, command=self.on_login, width=300, height=45, font=("Outfit", 14, "bold"))
-        login_button.pack(pady=(20, 30), padx=50)
+        login_button = ctk.CTkButton(frame, text=button_text, command=self.on_login, 
+                                    width=340, height=55, font=("Outfit", 16, "bold"),
+                                    fg_color=ACCENT_COLOR, hover_color="#7d3c98")
+        login_button.pack(pady=(10, 40), padx=60)
 
         if not exists:
-            ctk.CTkLabel(frame, text="Note: Your password must be 'Good' or better.\n(8+ chars, upper, lower, numbers/symbols)", font=("Outfit", 11), text_color="gray").pack(pady=(0, 20))
+            ctk.CTkLabel(frame, text="Note: Your password must be 'Good' or better.\n(8+ chars, upper, lower, numbers/symbols)", 
+                        font=("Outfit", 11), text_color="#666666").pack(pady=(0, 30))
 
     def update_master_strength_indicator(self):
         password = self.password_entry.get()
@@ -149,23 +166,36 @@ class HermitVaultApp(ctk.CTk):
 
     def show_vault_screen(self):
         self.clear_container()
+        self.container.configure(fg_color=BG_COLOR)
         
-        # Sidebar/Header
-        header = ctk.CTkFrame(self.container, height=80, corner_radius=0)
-        header.pack(fill="x", side="top")
+        # Sidebar
+        sidebar = ctk.CTkFrame(self.container, width=250, corner_radius=0, fg_color=CARD_COLOR)
+        sidebar.pack(side="left", fill="y")
+
+        if self.logo_img:
+            ctk.CTkLabel(sidebar, image=self.logo_img, text="").pack(pady=(40, 10))
         
-        if self.logo_small:
-            ctk.CTkLabel(header, image=self.logo_small, text="").pack(side="left", padx=(30, 5), pady=20)
-            ctk.CTkLabel(header, text="HermitVault", font=("Outfit", 24, "bold")).pack(side="left", pady=20)
-        else:
-            ctk.CTkLabel(header, text="🛡️ HermitVault", font=("Outfit", 24, "bold")).pack(side="left", padx=30, pady=20)
+        ctk.CTkLabel(sidebar, text="HermitVault", font=("Outfit", 24, "bold")).pack(pady=(0, 40))
+
+        add_btn = ctk.CTkButton(sidebar, text="+ Add New", command=self.show_add_dialog, 
+                               width=180, height=45, font=("Outfit", 14, "bold"),
+                               fg_color=ACCENT_COLOR, hover_color="#7d3c98")
+        add_btn.pack(pady=20)
         
-        add_btn = ctk.CTkButton(header, text="+ Add Credential", command=self.show_add_dialog, width=150, height=35, font=("Outfit", 13, "bold"))
-        add_btn.pack(side="right", padx=30, pady=20)
+        stats_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        stats_frame.pack(side="bottom", fill="x", pady=40)
+        creds_count = len(self.vault_manager.get_credentials())
+        ctk.CTkLabel(stats_frame, text=f"{creds_count} items secured", font=("Outfit", 12), text_color=SECONDARY_TEXT).pack()
+
+        # Main Content Area
+        content = ctk.CTkFrame(self.container, fg_color="transparent")
+        content.pack(side="right", fill="both", expand=True, padx=40, pady=40)
+
+        ctk.CTkLabel(content, text="Your Secure Vault", font=("Outfit", 28, "bold"), anchor="w").pack(fill="x", pady=(0, 20))
 
         # Scrollable area
-        self.scroll_frame = ctk.CTkScrollableFrame(self.container, fg_color="transparent")
-        self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        self.scroll_frame = ctk.CTkScrollableFrame(content, fg_color="transparent")
+        self.scroll_frame.pack(fill="both", expand=True)
 
         self.refresh_vault_list()
 
@@ -183,30 +213,31 @@ class HermitVaultApp(ctk.CTk):
             self.create_credential_card(i, cred)
 
     def create_credential_card(self, index, cred):
-        card = ctk.CTkFrame(self.scroll_frame, height=80)
-        card.pack(fill="x", pady=5, padx=5)
+        card = ctk.CTkFrame(self.scroll_frame, height=90, fg_color=CARD_COLOR, corner_radius=15, border_width=1, border_color="#333333")
+        card.pack(fill="x", pady=10, padx=5)
 
         # Info Layout
         info_frame = ctk.CTkFrame(card, fg_color="transparent")
-        info_frame.pack(side="left", padx=20, fill="y")
+        info_frame.pack(side="left", padx=25, fill="y")
 
-        ctk.CTkLabel(info_frame, text=cred['site'], font=("Outfit", 16, "bold"), anchor="w").pack(pady=(10, 0), fill="x")
-        ctk.CTkLabel(info_frame, text=f"User: {cred['user']}", font=("Outfit", 12), text_color="gray", anchor="w").pack(pady=(0, 10), fill="x")
+        ctk.CTkLabel(info_frame, text=cred['site'], font=("Outfit", 18, "bold"), anchor="w", text_color=TEXT_COLOR).pack(pady=(15, 0), fill="x")
+        ctk.CTkLabel(info_frame, text=cred['user'], font=("Outfit", 13), text_color=SECONDARY_TEXT, anchor="w").pack(pady=(0, 15), fill="x")
 
         # Actions Layout
         actions_frame = ctk.CTkFrame(card, fg_color="transparent")
-        actions_frame.pack(side="right", padx=20)
+        actions_frame.pack(side="right", padx=25)
 
-        copy_user_btn = ctk.CTkButton(actions_frame, text="Copy User", width=100, height=30, 
-                                     fg_color="#34495e", hover_color="#2c3e50",
+        copy_user_btn = ctk.CTkButton(actions_frame, text="User", width=80, height=35, 
+                                     fg_color="#333333", hover_color="#444444", font=("Outfit", 12, "bold"),
                                      command=lambda u=cred['user']: self.copy_to_clipboard(u, "Username"))
         copy_user_btn.pack(side="left", padx=5)
 
-        copy_pass_btn = ctk.CTkButton(actions_frame, text="Copy Pass", width=100, height=30,
+        copy_pass_btn = ctk.CTkButton(actions_frame, text="Pass", width=80, height=35,
+                                     fg_color=ACCENT_COLOR, hover_color="#7d3c98", font=("Outfit", 12, "bold"),
                                      command=lambda p=cred['password']: self.copy_to_clipboard(p, "Password"))
         copy_pass_btn.pack(side="left", padx=5)
         
-        del_btn = ctk.CTkButton(actions_frame, text="🗑️", width=40, height=30, fg_color="#c0392b", hover_color="#a93226",
+        del_btn = ctk.CTkButton(actions_frame, text="🗑️", width=40, height=35, fg_color="#442222", hover_color="#c0392b",
                                command=lambda i=index: self.delete_credential(i))
         del_btn.pack(side="left", padx=5)
 
@@ -252,29 +283,30 @@ class AddCredentialDialog(ctk.CTkToplevel):
         self.geometry(f"+{x}+{y}")
 
     def setup_ui(self):
-        ctk.CTkLabel(self, text="New Credential", font=("Outfit", 20, "bold")).pack(pady=20)
+        self.configure(fg_color=BG_COLOR)
+        ctk.CTkLabel(self, text="New Credential", font=("Outfit", 24, "bold")).pack(pady=30)
 
-        self.site_entry = ctk.CTkEntry(self, placeholder_text="Website / Service (e.g. Google)", width=350, height=40)
+        self.site_entry = ctk.CTkEntry(self, placeholder_text="Service Name", width=350, height=45, fg_color="#1e1e1e", border_color="#333333")
         self.site_entry.pack(pady=10)
 
-        self.user_entry = ctk.CTkEntry(self, placeholder_text="Username / Email", width=350, height=40)
+        self.user_entry = ctk.CTkEntry(self, placeholder_text="Username / Email", width=350, height=45, fg_color="#1e1e1e", border_color="#333333")
         self.user_entry.pack(pady=10)
 
         # Password row with eye and generate button
         pass_row = ctk.CTkFrame(self, fg_color="transparent")
         pass_row.pack(pady=10)
         
-        self.pass_entry = ctk.CTkEntry(pass_row, placeholder_text="Password", show="*", width=250, height=40)
+        self.pass_entry = ctk.CTkEntry(pass_row, placeholder_text="Password", show="*", width=240, height=45, fg_color="#1e1e1e", border_color="#333333")
         self.pass_entry.pack(side="left", padx=(0, 5))
 
-        self.pass_eye_btn = ctk.CTkButton(pass_row, text="👁️", width=40, height=40, 
+        self.pass_eye_btn = ctk.CTkButton(pass_row, text="👁️", width=45, height=45, 
                                          command=lambda: self.toggle_visibility(self.pass_entry, self.pass_eye_btn),
-                                         fg_color="transparent", hover_color="#34495e")
+                                         fg_color="#333333", hover_color="#444444")
         self.pass_eye_btn.pack(side="left", padx=(0, 5))
 
-        self.gen_toggle_btn = ctk.CTkButton(pass_row, text="🧙", width=40, height=40, 
+        self.gen_toggle_btn = ctk.CTkButton(pass_row, text="🧙", width=45, height=45, 
                                            command=self.toggle_generator,
-                                           fg_color="#8e44ad", hover_color="#7d3c98")
+                                           fg_color=ACCENT_COLOR, hover_color="#7d3c98")
         self.gen_toggle_btn.pack(side="left")
 
         # Strength Meter
