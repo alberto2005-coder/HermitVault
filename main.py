@@ -101,8 +101,10 @@ class HermitVaultApp(ctk.CTk):
         theme_frame.pack(side="bottom", pady=(0, 20))
         ctk.CTkLabel(theme_frame, text="Theme:", font=("Outfit", 10), text_color=SECONDARY_TEXT).pack(side="left", padx=5)
         self.theme_menu = ctk.CTkOptionMenu(theme_frame, values=["Dark", "Light"], 
-                                          width=100, height=25, font=("Outfit", 10),
-                                          fg_color="#333333", button_color=ACCENT_COLOR,
+                                          width=120, height=30, font=("Outfit", 11),
+                                          fg_color=INPUT_BG, button_color=ACCENT_COLOR,
+                                          text_color=TEXT_COLOR,
+                                          dropdown_fg_color=CARD_COLOR,
                                           command=self.change_appearance_mode)
         self.theme_menu.set(CONFIG.get("appearance", "dark").capitalize())
         self.theme_menu.pack(side="left")
@@ -115,12 +117,14 @@ class HermitVaultApp(ctk.CTk):
             ctk.CTkLabel(tab_unlock, text="No vaults found.\nGo to 'New Vault' to create one.", 
                         font=("Outfit", 14), text_color=SECONDARY_TEXT).pack(pady=50)
         else:
-            ctk.CTkLabel(tab_unlock, text="Select Vault:", font=("Outfit", 13)).pack(pady=(20, 5))
-        self.vault_select = ctk.CTkOptionMenu(tab_unlock, values=vaults, width=320, height=45, 
+            ctk.CTkLabel(tab_unlock, text="Select Vault:", font=("Outfit", 13), text_color=TEXT_COLOR).pack(pady=(20, 5))
+            self.vault_select = ctk.CTkOptionMenu(tab_unlock, values=vaults, width=320, height=45, 
                                                 fg_color=INPUT_BG, button_color=ACCENT_COLOR, 
                                                 text_color=TEXT_COLOR,
-                                                dropdown_fg_color=CARD_COLOR, corner_radius=20)
-        self.vault_select.pack(pady=10)
+                                                dropdown_fg_color=CARD_COLOR, 
+                                                dropdown_text_color=TEXT_COLOR,
+                                                corner_radius=20)
+            self.vault_select.pack(pady=10)
             
             # Password row for Unlock
         pass_container = ctk.CTkFrame(tab_unlock, fg_color="transparent")
@@ -143,12 +147,13 @@ class HermitVaultApp(ctk.CTk):
                          fg_color=ACCENT_COLOR, corner_radius=25).pack(pady=20)
 
         # --- CREATE TAB ---
-        ctk.CTkLabel(tab_create, text="Vault Name:", font=("Outfit", 13)).pack(pady=(20, 5))
+        ctk.CTkLabel(tab_create, text="Vault Name:", font=("Outfit", 13), text_color=TEXT_COLOR).pack(pady=(20, 5))
         self.new_vault_name = ctk.CTkEntry(tab_create, placeholder_text="e.g. Personal, Work", 
-                                          width=320, height=50, corner_radius=20)
+                                          width=320, height=50, corner_radius=20,
+                                          fg_color=INPUT_BG, border_color=BORDER_COLOR, text_color=TEXT_COLOR)
         self.new_vault_name.pack(pady=5)
         
-        ctk.CTkLabel(tab_create, text="Master Password:", font=("Outfit", 13)).pack(pady=(10, 5))
+        ctk.CTkLabel(tab_create, text="Master Password:", font=("Outfit", 13), text_color=TEXT_COLOR).pack(pady=(10, 5))
         
         # Password row for Create
         create_pass_frame = ctk.CTkFrame(tab_create, fg_color="transparent")
@@ -253,8 +258,10 @@ class HermitVaultApp(ctk.CTk):
         theme_frame.pack(side="bottom", pady=20)
         ctk.CTkLabel(theme_frame, text="Appearance:", font=("Outfit", 11), text_color=SECONDARY_TEXT).pack(pady=5)
         self.sidebar_theme = ctk.CTkOptionMenu(theme_frame, values=["Dark", "Light"], 
-                                             width=120, height=30, font=("Outfit", 11),
-                                             fg_color="#333333", button_color=ACCENT_COLOR,
+                                             width=140, height=35, font=("Outfit", 11),
+                                             fg_color=INPUT_BG, button_color=ACCENT_COLOR,
+                                             text_color=TEXT_COLOR, dropdown_fg_color=CARD_COLOR,
+                                             dropdown_text_color=TEXT_COLOR, corner_radius=15,
                                              command=self.change_appearance_mode)
         self.sidebar_theme.set(CONFIG.get("appearance", "dark").capitalize())
         self.sidebar_theme.pack()
