@@ -1,27 +1,28 @@
-# 🛡️ HermitVault - Offline Password Manager
+# 🛡️ HermitVault - Offline Password Manager (v2.0)
 
 ![HermitVault Logo](logo.png)
 
-**HermitVault** es un gestor de contraseñas local, offline y de alta seguridad diseñado para usuarios que priorizan la privacidad absoluta. No hay nubes, no hay servidores externos; tus datos nunca salen de tu máquina.
+**HermitVault** es un gestor de contraseñas local, offline y de alta seguridad diseñado para usuarios que priorizan la privacidad absoluta. Con una interfaz web-moderna basada en arquitectura Glassmorphism, HermitVault ofrece una experiencia premium sin comprometer la seguridad.
 
 ## ✨ Características Principales
 
-- **Seguridad "Zero Knowledge":** Tu contraseña maestra nunca se guarda. Se utiliza exclusivamente para derivar la clave de cifrado en memoria.
-- **Soporte Multi-Bóveda:** Crea y gestiona múltiples archivos de bóveda independientes para diferentes usuarios o propósitos.
-- **Política de Seguridad Obligatoria:** La contraseña del Vault debe ser al menos de nivel **"Good"** para inicializar la bóveda.
-- **Interfaz Premium Modernizada:** Diseño ultra-moderno con botones redondeados, barra lateral de navegación y estética "Deep Charcoal".
-- **🧙 Generador de Contraseñas:** Crea contraseñas aleatorias criptográficamente fuertes con longitud y caracteres personalizables.
-- **📊 Medidor de Fortaleza:** Validación en tiempo real con barras de progreso dinámicas.
+- **Seguridad "Zero Knowledge":** Tu contraseña maestra nunca se guarda. Se utiliza exclusivamente para derivar la clave de cifrado en memoria mediante PBKDF2 y AES-256.
+- **Sistema de Papelera (Trash):** Protección contra borrados accidentales. Restaura tus credenciales o elimínalas permanentemente.
+- **🧙 Generador Avanzado:** Panel de creación de contraseñas con control granular sobre longitud, mayúsculas, números y símbolos.
+- **📊 Medidor de Fortaleza (zxcvbn):** Análisis de entropía de nivel profesional que detecta patrones, repeticiones y palabras del diccionario en tiempo real.
+- **🎨 Personalización Premium:** Soporte para iconos personalizados por servicio (favicon) y estética ultra-moderna con Glassmorphism.
+- **📉 Exportación a Excel:** Genera informes de tus credenciales de forma rápida y sencilla.
+- **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
-- **📋 Portapapeles Seguro:** Botones rápidos para copiar credenciales sin exposición visual.
 
 ## 🛠️ Stack Tecnológico
 
-- **Lenguaje:** Python 3.10+
-- **GUI:** [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
-- **Criptografía:** [cryptography.io](https://cryptography.io/en/latest/)
-- **Imágenes:** Pillow (PIL)
-- **Portapapeles:** Pyperclip
+- **Backend:** Python 3.10+
+- **Frontend:** HTML5, Tailwind CSS, JavaScript (ES6+)
+- **GUI Bridge:** [pywebview](https://pywebview.flowrl.com/)
+- **Criptografía:** [cryptography.io](https://cryptography.io/en/latest/) (Fernet/AES)
+- **Análisis de Seguridad:** [zxcvbn](https://github.com/dropbox/zxcvbn)
+- **Procesamiento de Datos:** Pandas & Openpyxl (para exportación Excel)
 
 ## 🚀 Instalación y Uso
 
@@ -43,11 +44,9 @@
 
 ## 🔒 Arquitectura de Seguridad
 
-Los datos se almacenan en un archivo binario `vault.vault`. El archivo tiene la siguiente estructura:
-1. Primeros 16 bytes: **Salt** aleatorio.
-2. Resto del archivo: **Payload cifrado** (JSON con credenciales).
-
-Incluso si alguien obtiene acceso a tu archivo `.vault`, necesitaría romper 480,000 iteraciones de PBKDF2 para intentar un ataque de fuerza bruta contra tu contraseña maestra.
+Los datos se almacenan en archivos binarios `.vault`. El archivo tiene la siguiente estructura:
+1. Primeros 16 bytes: **Salt** criptográfico único generado por bóveda.
+2. Resto del archivo: **Payload cifrado** con AES-256 (CBC/GCM) que contiene el JSON de credenciales y papelera.
 
 ## 📄 Licencia
 
@@ -55,11 +54,11 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ## 🛠️ Próximas Mejoras (Roadmap)
 
-Estamos trabajando para hacer **HermitVault** aún más versátil. Próximamente:
-- [ ] **Modo Claro / Oscuro:** Selector dinámico de temas dentro de la app.
-- [ ] **Traducción Multilingüe:** Soporte completo para Inglés y Español.
-- [ ] **Gestión de Bóveda:** Funciones para cambiar el nombre o la contraseña maestra de una bóveda existente.
-- [ ] **Exportación Segura:** Copia de seguridad cifrada de los datos, permitiendo importar y exportar en la app para poder pasar entre dispositivos un vaul entero.
+- [ ] **Sincronización P2P:** Sincronización entre dispositivos sin servidor central.
+- [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
+- [ ] **Categorización por Carpetas:** Organización avanzada de items mediante etiquetas o directorios virtuales.
+- [ ] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
+- [ ] **Soporte para Notas Seguras:** Almacenamiento de texto libre cifrado más allá de simples credenciales.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)

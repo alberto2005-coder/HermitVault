@@ -13,9 +13,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
     <style>
         body {
             margin: 0;
@@ -31,6 +29,13 @@
         .glass-panel {
             background: rgba(23, 18, 24, 0.8);
             backdrop-filter: blur(12px);
+        }
+        .toast {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(100%) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
     </style>
     <script id="tailwind-config">
@@ -191,7 +196,10 @@
                     </div>
                     <div class="relative w-full group">
                         <label class="block font-label-sm text-on-surface-variant mb-2 ml-4">Master Password</label>
-                        <input id="create-pass-el" class="w-full bg-surface-container-highest text-on-surface border-0 rounded-full px-6 py-4 focus:ring-2 focus:ring-primary-container/50 transition-all font-body-md" placeholder="Make it strong" type="password"/>
+                        <input id="create-pass-el" oninput="checkStrength(this.value, 'strength-bar-create')" class="w-full bg-surface-container-highest text-on-surface border-0 rounded-full px-6 py-4 focus:ring-2 focus:ring-primary-container/50 transition-all font-body-md" placeholder="Make it strong" type="password"/>
+                        <div class="mt-3 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden mx-4 w-[calc(100%-32px)]">
+                            <div id="strength-bar-create" class="h-full w-0 transition-all duration-500 bg-red-500"></div>
+                        </div>
                         <p id="create-error-el" class="text-red-400 text-xs mt-2 ml-4 hidden"></p>
                     </div>
                 </div>
@@ -207,6 +215,9 @@
             </button>
         </div>
     </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-10 right-10 z-[200] flex flex-col gap-4"></div>
     <!-- Theme Toggle Fixed -->
     <div class="fixed bottom-12 right-12 z-50">
         <button
@@ -229,7 +240,11 @@
                 const vaults = await window.pywebview.api.list_vaults();
                 const select = document.getElementById('vault-select-el');
                 if (select) {
-                    select.innerHTML = vaults.map(v => `<option value="${v}">${v}</option>`).join('');
+                    if (vaults.length > 0) {
+                        select.innerHTML = vaults.map(v => `<option value="${v}">${v}</option>`).join('');
+                    } else {
+                        select.innerHTML = '<option value="">No vaults found. Create one!</option>';
+                    }
                 }
             }
         }
@@ -259,28 +274,89 @@
             }
         }
 
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            const color = type === 'success' ? 'text-green-400' : 'text-red-400';
+            const bg = type === 'success' ? 'bg-green-500/10' : 'bg-red-500/10';
+            
+            toast.className = `toast glass-panel px-6 py-4 rounded-2xl border border-white/5 shadow-2xl flex items-center gap-4 min-w-[300px]`;
+            toast.style.background = 'rgba(23, 18, 24, 0.9)';
+            toast.innerHTML = `
+                <div class="w-10 h-10 ${bg} rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined ${color}">${icon}</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-white">${msg}</p>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px) scale(0.95)';
+                toast.style.transition = 'all 0.3s ease-in';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function checkStrength(p, barId) {
+            const bar = document.getElementById(barId);
+            if (!bar || typeof zxcvbn !== 'function') return;
+            
+            const result = zxcvbn(p);
+            const score = result.score; // 0 to 4
+            
+            const widths = ['5%', '25%', '50%', '75%', '100%'];
+            const colors = ['bg-red-600', 'bg-red-400', 'bg-yellow-500', 'bg-green-400', 'bg-green-600'];
+            
+            bar.className = `h-full transition-all duration-500 ${colors[score]}`;
+            bar.style.width = p.length > 0 ? widths[score] : '0%';
+        }
+
         async function handleAction() {
-            // Hide previous errors
+            // Hide previous inline errors
             document.getElementById('unlock-error-el').classList.add('hidden');
             document.getElementById('create-error-el').classList.add('hidden');
 
             if (currentTab === 'unlock') {
                 const name = document.getElementById('vault-select-el').value;
                 const pass = document.getElementById('unlock-pass-el').value;
-                if (!pass) return showError('unlock-error-el', "Please enter password");
+                
+                if (!name) return showToast("No vault selected", "error");
+                if (!pass) {
+                    showError('unlock-error-el', "Password is required");
+                    return showToast("Password field is empty", "error");
+                }
                 
                 const res = await window.pywebview.api.unlock_vault(name, pass);
                 if (res.success) window.location.href = 'dashboard.html';
-                else showError('unlock-error-el', res.error);
+                else {
+                    showError('unlock-error-el', res.error);
+                    showToast(res.error, "error");
+                }
             } else {
                 const name = document.getElementById('create-name-el').value;
                 const pass = document.getElementById('create-pass-el').value;
-                if (!name) return showError('create-error-el', "Name required");
-                if (!pass) return showError('create-error-el', "Password required");
+                
+                let missing = [];
+                if (!name) missing.push("Name");
+                if (!pass) missing.push("Password");
+                
+                if (missing.length > 0) {
+                    const msg = `Missing: ${missing.join(', ')}`;
+                    showError('create-error-el', msg);
+                    return showToast(msg, "error");
+                }
                 
                 const res = await window.pywebview.api.create_vault(name, pass);
-                if (res.success) window.location.href = 'dashboard.html';
-                else showError('create-error-el', res.error);
+                if (res.success) {
+                    showToast("Vault created successfully!");
+                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                } else {
+                    showError('create-error-el', res.error);
+                    showToast(res.error, "error");
+                }
             }
         }
 

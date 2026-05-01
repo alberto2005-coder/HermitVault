@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
     <style>
         body { margin: 0; padding: 0; background-color: #0f172a; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
@@ -84,7 +85,6 @@
                 <button onclick="showSettingsModal()" class="p-3 text-slate-400 hover:bg-slate-800/50 hover:text-purple-400 rounded-full transition-all" title="Vault Settings">
                     <span class="material-symbols-outlined">settings</span>
                 </button>
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg">H</div>
             </div>
         </header>
 
@@ -146,13 +146,16 @@
                 <div>
                     <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">Password</label>
                     <div class="relative">
-                        <input id="add-pass-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="••••••••"/>
-                        <button onclick="generatePass()" class="absolute right-12 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
+                        <input id="add-pass-el" oninput="checkStrength(this.value, 'strength-bar-add')" class="w-full bg-slate-950 border-none text-white rounded-2xl pl-6 pr-24 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="••••••••"/>
+                        <button onclick="showGenModal()" class="absolute right-12 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
                             <span class="material-symbols-outlined text-xl">auto_fix_high</span>
                         </button>
                         <button onclick="togglePass('add-pass-el')" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
                             <span id="add-pass-el-icon" class="material-symbols-outlined">visibility</span>
                         </button>
+                    </div>
+                    <div class="mt-3 h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+                        <div id="strength-bar-add" class="h-full w-0 transition-all duration-500 bg-red-500"></div>
                     </div>
                 </div>
                 <div>
@@ -167,6 +170,50 @@
         </div>
     </div>
 
+    <!-- Password Generator Modal -->
+    <div id="modal-gen-el" class="fixed inset-0 z-[110] flex items-center justify-center blur-overlay hidden">
+        <div class="bg-slate-900 w-full max-w-md p-10 rounded-3xl border border-white/10 shadow-2xl">
+            <h2 class="text-2xl font-bold text-white mb-2">Password Generator</h2>
+            <p class="text-slate-500 text-sm mb-8">Customize your secure secret.</p>
+            
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <label class="text-xs font-bold text-purple-400 uppercase tracking-wider">Length: <span id="gen-length-val" class="text-white ml-2">16</span></label>
+                    </div>
+                    <input id="gen-length-range" type="range" min="8" max="64" value="16" oninput="updateGenLength(this.value)" class="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="flex items-center gap-3 p-4 bg-slate-950 rounded-2xl cursor-pointer hover:bg-slate-800 transition-colors">
+                        <input id="gen-upper" type="checkbox" checked class="rounded border-white/10 bg-slate-900 text-purple-600 focus:ring-purple-500" />
+                        <span class="text-sm text-slate-300 font-medium">Uppercase</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-4 bg-slate-950 rounded-2xl cursor-pointer hover:bg-slate-800 transition-colors">
+                        <input id="gen-numbers" type="checkbox" checked class="rounded border-white/10 bg-slate-900 text-purple-600 focus:ring-purple-500" />
+                        <span class="text-sm text-slate-300 font-medium">Numbers</span>
+                    </label>
+                    <label class="flex items-center gap-3 p-4 bg-slate-950 rounded-2xl cursor-pointer hover:bg-slate-800 transition-colors">
+                        <input id="gen-symbols" type="checkbox" checked class="rounded border-white/10 bg-slate-900 text-purple-600 focus:ring-purple-500" />
+                        <span class="text-sm text-slate-300 font-medium">Symbols</span>
+                    </label>
+                </div>
+
+                <div class="relative group mt-4">
+                    <input id="gen-result-el" readonly class="w-full bg-slate-950 border border-white/5 text-purple-400 font-mono rounded-2xl px-6 py-5 text-lg text-center" value="" />
+                    <button onclick="generateInModal()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-10">
+                <button onclick="hideGenModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
+                <button onclick="useGeneratedPass()" class="flex-1 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 hover:scale-[1.02] active:scale-95 transition-all">Use Password</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="modal-settings-el" class="fixed inset-0 z-[100] flex items-center justify-center blur-overlay hidden">
         <div class="bg-slate-900 w-full max-w-md p-10 rounded-3xl border border-white/10 shadow-2xl">
@@ -177,10 +224,13 @@
                 <div>
                     <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">New Master Password</label>
                     <div class="relative">
-                        <input id="new-master-pass-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="Must be strong"/>
+                        <input id="new-master-pass-el" oninput="checkStrength(this.value, 'strength-bar-master')" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="Must be strong"/>
                         <button onclick="togglePass('new-master-pass-el')" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
                             <span id="new-master-pass-el-icon" class="material-symbols-outlined">visibility</span>
                         </button>
+                    </div>
+                    <div class="mt-3 h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+                        <div id="strength-bar-master" class="h-full w-0 transition-all duration-500 bg-red-500"></div>
                     </div>
                     <p id="settings-error-el" class="text-red-400 text-xs mt-3 ml-2 hidden"></p>
                 </div>
@@ -386,10 +436,18 @@
             const icon = document.getElementById('add-icon-el').value;
             const index = parseInt(document.getElementById('edit-index-el').value);
 
-            if (!site || !user || !pass) return;
+            if (!site || !user || !pass) {
+                showToast("Please fill all mandatory fields", "error");
+                return;
+            }
             
-            if (index === -1) await window.pywebview.api.add_credential(site, user, pass, icon);
-            else await window.pywebview.api.update_credential(index, site, user, pass, icon);
+            if (index === -1) {
+                await window.pywebview.api.add_credential(site, user, pass, icon);
+                showToast("Item added successfully");
+            } else {
+                await window.pywebview.api.update_credential(index, site, user, pass, icon);
+                showToast("Item updated successfully");
+            }
             
             hideAddModal();
             refreshVault();
@@ -419,9 +477,63 @@
             }
         }
 
+        function showGenModal() {
+            document.getElementById('modal-gen-el').classList.remove('hidden');
+            generateInModal();
+        }
+
+        function hideGenModal() {
+            document.getElementById('modal-gen-el').classList.add('hidden');
+        }
+
+        function updateGenLength(v) {
+            document.getElementById('gen-length-val').innerText = v;
+            generateInModal();
+        }
+
+        function generateInModal() {
+            const length = document.getElementById('gen-length-range').value;
+            const useUpper = document.getElementById('gen-upper').checked;
+            const useNumbers = document.getElementById('gen-numbers').checked;
+            const useSymbols = document.getElementById('gen-symbols').checked;
+            
+            let charset = "abcdefghijklmnopqrstuvwxyz";
+            if (useUpper) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            if (useNumbers) charset += "0123456789";
+            if (useSymbols) charset += "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+            
+            let retVal = "";
+            for (let i = 0; i < length; ++i) {
+                retVal += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            document.getElementById('gen-result-el').value = retVal;
+        }
+
+        function useGeneratedPass() {
+            const pass = document.getElementById('gen-result-el').value;
+            const input = document.getElementById('add-pass-el');
+            input.value = pass;
+            checkStrength(pass, 'strength-bar-add');
+            hideGenModal();
+        }
+
+        function checkStrength(p, barId) {
+            const bar = document.getElementById(barId);
+            if (!bar || typeof zxcvbn !== 'function') return;
+            
+            const result = zxcvbn(p);
+            const score = result.score; // 0 to 4
+            
+            const widths = ['5%', '25%', '50%', '75%', '100%'];
+            const colors = ['bg-red-600', 'bg-red-400', 'bg-yellow-500', 'bg-green-400', 'bg-green-600'];
+            
+            bar.className = `h-full transition-all duration-500 ${colors[score]}`;
+            bar.style.width = p.length > 0 ? widths[score] : '0%';
+        }
+
         async function generatePass() {
-            const pass = await window.pywebview.api.generate_password();
-            document.getElementById('add-pass-el').value = pass;
+            // Deprecated - using generator modal now
+            showGenModal();
         }
 
         function togglePass(id) {

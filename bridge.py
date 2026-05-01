@@ -83,8 +83,10 @@ class HermitAPI:
         if score < 3:
             return {"success": False, "error": "Password too weak"}
         
-        success = self.vault_manager.change_password(new_password)
-        return {"success": success}
+        res = self.vault_manager.change_password(new_password)
+        if res == "ALREADY_SAME":
+            return {"success": False, "error": "New password is same as current one"}
+        return {"success": res is True}
 
     def get_trash(self):
         if not self.vault_manager: return []

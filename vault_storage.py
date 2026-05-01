@@ -125,6 +125,12 @@ class VaultManager:
     def change_password(self, new_password):
         """Re-encrypts the vault data with a new password."""
         if self.key is None: return False
+        
+        # Check if new password is same as old
+        check_key = derive_key(new_password, self.salt)
+        if check_key == self.key:
+            return "ALREADY_SAME"
+            
         self.salt = generate_salt()
         self.key = derive_key(new_password, self.salt)
         self.save_vault()
