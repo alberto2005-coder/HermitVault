@@ -15,7 +15,7 @@ ctk.set_appearance_mode(CONFIG.get("appearance", "dark"))
 ACCENT_COLOR = "#8e44ad"
 BG_COLOR = ("#f2f2f2", "#1a1a1a")
 CARD_COLOR = ("#ffffff", "#252525")
-BORDER_COLOR = ("#d1d1d1", "#333333")
+BORDER_COLOR = ("#949494", "#333333")
 TEXT_COLOR = ("#1a1a1a", "#ffffff")
 SECONDARY_TEXT = ("#666666", "#b3b3b3")
 INPUT_BG = ("#ffffff", "#1e1e1e")
@@ -111,7 +111,7 @@ class HermitVaultApp(ctk.CTk):
                                           dropdown_fg_color=CARD_COLOR,
                                           command=self.change_appearance_mode)
         self.theme_menu.set(CONFIG.get("appearance", "dark").capitalize())
-        self.theme_menu.pack()
+        self.theme_menu.pack(padx=2, pady=2)
 
         tab_unlock = self.tabview.add("Unlock Vault")
         tab_create = self.tabview.add("New Vault")
@@ -132,7 +132,7 @@ class HermitVaultApp(ctk.CTk):
                                                 dropdown_fg_color=CARD_COLOR, 
                                                 dropdown_text_color=TEXT_COLOR,
                                                 corner_radius=20)
-            self.vault_select.pack()
+            self.vault_select.pack(padx=2, pady=2)
             
             # Password row for Unlock
         pass_container = ctk.CTkFrame(tab_unlock, fg_color="transparent")
@@ -276,7 +276,7 @@ class HermitVaultApp(ctk.CTk):
                                              dropdown_text_color=TEXT_COLOR, corner_radius=15,
                                              command=self.change_appearance_mode)
         self.sidebar_theme.set(CONFIG.get("appearance", "dark").capitalize())
-        self.sidebar_theme.pack()
+        self.sidebar_theme.pack(padx=2, pady=2)
 
         stats_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         stats_frame.pack(side="bottom", fill="x", pady=40)
