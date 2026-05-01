@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #171218;
+            /* surface from config */
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-panel {
+            background: rgba(23, 18, 24, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#171218",
+                        "on-tertiary-fixed-variant": "#4f4800",
+                        "on-primary-fixed-variant": "#6c228c",
+                        "primary-fixed": "#f8d8ff",
+                        "secondary-fixed": "#dee2ee",
+                        "secondary-fixed-dim": "#c2c6d2",
+                        "tertiary-fixed-dim": "#d5c962",
+                        "on-secondary": "#2c3139",
+                        "on-tertiary-container": "#474000",
+                        "on-primary": "#520071",
+                        "secondary-container": "#474c55",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed": "#320047",
+                        "tertiary-fixed": "#f2e57b",
+                        "surface-dim": "#171218",
+                        "on-secondary-container": "#b7bcc7",
+                        "background": "#171218",
+                        "tertiary": "#d5c962",
+                        "surface-bright": "#3e373f",
+                        "outline-variant": "#4e4350",
+                        "on-secondary-fixed": "#171c24",
+                        "primary-fixed-dim": "#ecb2ff",
+                        "surface-tint": "#ecb2ff",
+                        "on-surface-variant": "#d1c2d2",
+                        "inverse-primary": "#873da6",
+                        "on-tertiary-fixed": "#1f1c00",
+                        "surface-container-highest": "#39333a",
+                        "on-surface": "#ebdfe9",
+                        "secondary": "#c2c6d2",
+                        "surface-container-high": "#2e282f",
+                        "surface-container": "#231e25",
+                        "outline": "#9a8c9b",
+                        "inverse-on-surface": "#352e36",
+                        "primary-container": "#8e44ad",
+                        "surface-variant": "#39333a",
+                        "surface-container-low": "#1f1a20",
+                        "surface-container-lowest": "#110c13",
+                        "primary": "#ecb2ff",
+                        "error-container": "#93000a",
+                        "on-background": "#ebdfe9",
+                        "inverse-surface": "#ebdfe9",
+                        "on-tertiary": "#363100",
+                        "on-secondary-fixed-variant": "#424750",
+                        "on-primary-container": "#f8d8ff",
+                        "on-error": "#690005",
+                        "tertiary-container": "#b9ad4a",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "element-gap": "16px",
+                        "card-max-width": "480px",
+                        "base": "8px",
+                        "container-padding": "32px"
+                    },
+                    "fontFamily": {
+                        "h1": ["Space Grotesk"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h1": ["36px", { "lineHeight": "1.2", "letterSpacing": "-0.5px", "fontWeight": "700" }],
+                        "label-sm": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "letterSpacing": "0px", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-surface text-on-surface min-h-screen flex items-center justify-center relative overflow-hidden font-body-md">
+    <!-- Background Decoration -->
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div
+            class="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-primary-container/20 rounded-full blur-[120px]">
+        </div>
+        <div
+            class="absolute -bottom-[20%] -right-[10%] w-[600px] h-[600px] bg-tertiary-container/10 rounded-full blur-[120px]">
+        </div>
+    </div>
+    <!-- Top Navigation Anchor (Shared Component Execution) -->
+    <header
+        class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-12 py-4 bg-slate-950/50 backdrop-blur-md border-b border-white/10 shadow-lg shadow-black/20">
+        <div class="flex items-center gap-2">
+            <img src="logo.png" class="w-8 h-8 object-contain" alt="Logo" />
+            <span class="text-xl font-bold text-slate-50 font-['Space_Grotesk'] tracking-tight">HermitVault</span>
+        </div>
+        <nav class="hidden md:flex gap-8 items-center">
+            <div class="flex gap-4">
+                <span
+                    class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-purple-300 transition-colors"
+                    data-icon="dark_mode">dark_mode</span>
+            </div>
+        </nav>
+    </header>
+    <!-- Main Authentication Card -->
+    <main class="relative z-10 w-full max-w-[480px] px-6">
+        <div
+            class="bg-surface-container shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-white/5 rounded-[28px] p-container-padding flex flex-col items-center">
+            <!-- Logo Section -->
+            <div class="mb-10 text-center">
+                <div
+                    class="w-20 h-20 bg-slate-950/50 rounded-3xl flex items-center justify-center mb-6 mx-auto shadow-2xl border border-white/5 p-4">
+                    <img src="logo.png" class="w-full h-full object-contain" alt="Logo" />
+                </div>
+                <h1 class="font-h1 text-h1 text-on-surface mb-2 tracking-tight">HermitVault</h1>
+                <p class="text-on-surface-variant text-body-md opacity-70">Secure access to your sensitive assets</p>
+            </div>
+            <!-- Segmented Control -->
+            <div class="w-full bg-surface-container-low p-1.5 rounded-full flex mb-8">
+                <button id="tab-unlock-btn" onclick="switchTab('unlock')" class="flex-1 py-3 px-6 rounded-full bg-primary-container text-white font-label-sm shadow-md transition-all duration-200">
+                    Unlock Vault
+                </button>
+                <button id="tab-create-btn" onclick="switchTab('create')" class="flex-1 py-3 px-6 rounded-full text-on-surface-variant hover:text-on-surface font-label-sm transition-all duration-200">
+                    New Vault
+                </button>
+            </div>
+            <!-- Forms Container -->
+            <div class="w-full mb-10">
+                <!-- UNLOCK FORM -->
+                <div id="form-unlock-container" class="space-y-element-gap">
+                    <div class="relative w-full group">
+                        <label class="block font-label-sm text-on-surface-variant mb-2 ml-4">Select Vault</label>
+                        <div class="relative">
+                            <select id="vault-select-el" class="w-full bg-surface-container-highest text-on-surface border-0 rounded-full px-6 py-4 appearance-none focus:ring-2 focus:ring-primary-container/50 transition-all font-body-md cursor-pointer"></select>
+                            <span class="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full group">
+                        <label class="block font-label-sm text-on-surface-variant mb-2 ml-4">Vault Password</label>
+                        <div class="relative">
+                            <input id="unlock-pass-el" class="w-full bg-surface-container-highest text-on-surface border-0 rounded-full px-6 py-4 focus:ring-2 focus:ring-primary-container/50 transition-all font-body-md placeholder:text-on-surface-variant/40" placeholder="Enter your passphrase" type="password"/>
+                            <p id="unlock-error-el" class="text-red-400 text-xs mt-2 ml-4 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CREATE FORM -->
+                <div id="form-create-container" class="space-y-element-gap hidden">
+                    <div class="relative w-full group">
+                        <label class="block font-label-sm text-on-surface-variant mb-2 ml-4">New Vault Name</label>
+                        <input id="create-name-el" class="w-full bg-surface-container-highest text-on-surface border-0 rounded-full px-6 py-4 focus:ring-2 focus:ring-primary-container/50 transition-all font-body-md" placeholder="e.g. MyPersonalVault" type="text"/>
+                    </div>
+                    <div class="relative w-full group">
+                        <label class="block font-label-sm text-on-surface-variant mb-2 ml-4">Master Password</label>
+                        <input id="create-pass-el" class="w-full bg-surface-container-highest text-on-surface border-0 rounded-full px-6 py-4 focus:ring-2 focus:ring-primary-container/50 transition-all font-body-md" placeholder="Make it strong" type="password"/>
+                        <p id="create-error-el" class="text-red-400 text-xs mt-2 ml-4 hidden"></p>
+                    </div>
+                </div>
+            </div>
+            <!-- Primary Action -->
+            <button onclick="handleAction()"
+                class="w-full bg-primary-container hover:bg-[#9b59b6] text-white font-label-sm py-5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-lg shadow-primary-container/20">
+                <span id="action-btn-text">Unlock Vault</span>
+            </button>
+            <!-- Recovery Link -->
+            <button class="mt-6 text-on-surface-variant hover:text-primary font-label-sm transition-colors">
+                Forgotten recovery key?
+            </button>
+        </div>
+    </main>
+    <!-- Theme Toggle Fixed -->
+    <div class="fixed bottom-12 right-12 z-50">
+        <button
+            class="flex items-center gap-3 bg-surface-container-high border border-white/5 rounded-full px-6 py-3 shadow-xl hover:bg-surface-bright transition-all duration-200">
+            <span class="material-symbols-outlined text-tertiary" data-icon="light_mode">light_mode</span>
+            <span class="font-label-sm text-on-surface">Light Mode</span>
+        </button>
+    </div>
+    <!-- Background Image / Texture -->
+    <div class="fixed inset-0 z-[-1] opacity-20 grayscale pointer-events-none">
+        <img class="w-full h-full object-cover"
+            data-alt="A highly detailed close-up of complex server circuitry and glowing data pathways in a dark datacenter environment. The visual style is high-fidelity and futuristic, featuring deep slate and obsidian tones with subtle purple and white light emissions. The mood is secure, professional, and technologically advanced, echoing a premium cybersecurity vault aesthetic with crisp lines and soft bokeh in the background."
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKUFRQijmOGmp2GDoM9NAZskMZgqGPDHo1CfVngr14HMT3-LVzJj-UyPXbsoch-1HX5WFSRQGqSd6IvNQqknjFMw9PxdXdCVsNsJI0CRx4nCF440VQ6UIe_PmGNd_fXmfZqsSDgq5b06IsucALjsNs0rFo-qykf_2yi8dcctF13AXNN9B4vyAUCGSgZ7ifX9ng9BYy0C5SLKkc3nA6UDhQKopIfLcWF9yZlExjJ5SVPcFym29Mjy7mEXP2ltGGjgOVt_SOypnQ9Tk" />
+    </div>
+    <script>
+        let currentTab = 'unlock';
+
+        async function init() {
+            if (window.pywebview && window.pywebview.api) {
+                const vaults = await window.pywebview.api.list_vaults();
+                const select = document.getElementById('vault-select-el');
+                if (select) {
+                    select.innerHTML = vaults.map(v => `<option value="${v}">${v}</option>`).join('');
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const unlockForm = document.getElementById('form-unlock-container');
+            const createForm = document.getElementById('form-create-container');
+            const unlockBtn = document.getElementById('tab-unlock-btn');
+            const createBtn = document.getElementById('tab-create-btn');
+            const actionBtnText = document.getElementById('action-btn-text');
+
+            if (tab === 'unlock') {
+                unlockForm.classList.remove('hidden');
+                createForm.classList.add('hidden');
+                unlockBtn.classList.add('bg-primary-container', 'text-white');
+                createBtn.classList.remove('bg-primary-container', 'text-white');
+                createBtn.classList.add('text-on-surface-variant');
+                actionBtnText.innerText = 'Unlock Vault';
+            } else {
+                unlockForm.classList.add('hidden');
+                createForm.classList.remove('hidden');
+                createBtn.classList.add('bg-primary-container', 'text-white');
+                unlockBtn.classList.remove('bg-primary-container', 'text-white');
+                unlockBtn.classList.add('text-on-surface-variant');
+                actionBtnText.innerText = 'Create New Vault';
+            }
+        }
+
+        async function handleAction() {
+            // Hide previous errors
+            document.getElementById('unlock-error-el').classList.add('hidden');
+            document.getElementById('create-error-el').classList.add('hidden');
+
+            if (currentTab === 'unlock') {
+                const name = document.getElementById('vault-select-el').value;
+                const pass = document.getElementById('unlock-pass-el').value;
+                if (!pass) return showError('unlock-error-el', "Please enter password");
+                
+                const res = await window.pywebview.api.unlock_vault(name, pass);
+                if (res.success) window.location.href = 'dashboard.html';
+                else showError('unlock-error-el', res.error);
+            } else {
+                const name = document.getElementById('create-name-el').value;
+                const pass = document.getElementById('create-pass-el').value;
+                if (!name) return showError('create-error-el', "Name required");
+                if (!pass) return showError('create-error-el', "Password required");
+                
+                const res = await window.pywebview.api.create_vault(name, pass);
+                if (res.success) window.location.href = 'dashboard.html';
+                else showError('create-error-el', res.error);
+            }
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            el.innerText = msg;
+            el.classList.remove('hidden');
+        }
+
+        window.addEventListener('pywebviewready', init);
+        setTimeout(init, 500);
+    </script>
+</body>
+
+</html>

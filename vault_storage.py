@@ -11,6 +11,7 @@ class VaultManager:
         self.salt = None
         self.key = None
         self.data = []
+        self.trash = []
 
     @staticmethod
     def list_available_vaults():
@@ -25,6 +26,7 @@ class VaultManager:
         self.salt = generate_salt()
         self.key = derive_key(master_password, self.salt)
         self.data = []
+        self.trash = []
         self.save_vault()
 
     def unlock_vault(self, master_password):
@@ -40,7 +42,15 @@ class VaultManager:
             
             self.key = derive_key(master_password, self.salt)
             decrypted_json = decrypt_data(encrypted_payload, self.key)
-            self.data = json.loads(decrypted_json)
+            decoded = json.loads(decrypted_json)
+            
+            # Handle old vaults or structure changes
+            if isinstance(decoded, list):
+                self.data = decoded
+                self.trash = []
+            else:
+                self.data = decoded.get("data", [])
+                self.trash = decoded.get("trash", [])
             return True
         except Exception as e:
             print(f"Unlock failed: {e}")
@@ -51,27 +61,71 @@ class VaultManager:
         if self.key is None or self.salt is None:
             raise Exception("Vault not unlocked")
         
-        json_data = json.dumps(self.data)
+        payload = {
+            "data": self.data,
+            "trash": self.trash
+        }
+        json_data = json.dumps(payload)
         encrypted_payload = encrypt_data(json_data, self.key)
         
         with open(self.vault_file, "wb") as f:
             f.write(self.salt)
             f.write(encrypted_payload)
 
-    def add_credential(self, site, user, password):
+    def add_credential(self, site, user, password, icon=""):
         self.data.append({
             "site": site,
             "user": user,
-            "password": password
+            "password": password,
+            "icon": icon
         })
         self.save_vault()
+
+    def update_credential(self, index, site, user, password, icon=""):
+        if 0 <= index < len(self.data):
+            self.data[index] = {
+                "site": site,
+                "user": user,
+                "password": password,
+                "icon": icon
+            }
+            self.save_vault()
+            return True
+        return False
 
     def get_credentials(self):
         return self.data
 
+    def get_trash(self):
+        return self.trash
+
     def delete_credential(self, index):
         if 0 <= index < len(self.data):
-            self.data.pop(index)
+            item = self.data.pop(index)
+            self.trash.append(item)
             self.save_vault()
             return True
         return False
+
+    def restore_credential(self, index):
+        if 0 <= index < len(self.trash):
+            item = self.trash.pop(index)
+            self.data.append(item)
+            self.save_vault()
+            return True
+        return False
+
+    def permanent_delete(self, index):
+        if 0 <= index < len(self.trash):
+            self.trash.pop(index)
+            self.save_vault()
+            return True
+        return False
+
+    def change_password(self, new_password):
+        """Re-encrypts the vault data with a new password."""
+        if self.key is None: return False
+        self.salt = generate_salt()
+        self.key = derive_key(new_password, self.salt)
+        self.save_vault()
+        return True

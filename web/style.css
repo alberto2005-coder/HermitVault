@@ -1,0 +1,63 @@
+body { 
+    margin: 0; 
+    padding: 0; 
+    background-color: #171218; 
+    user-select: none;
+}
+
+.material-symbols-outlined { 
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+}
+
+.glass-panel { 
+    background: rgba(23, 18, 24, 0.8); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px); 
+}
+
+.hidden { 
+    display: none !important; 
+}
+
+.active-nav { 
+    background: #8e44ad !important; 
+    color: white !important; 
+    box-shadow: 0 10px 20px rgba(142, 68, 173, 0.2);
+}
+
+aside nav a {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+}
+
+aside nav a span:first-child {
+    font-size: 20px;
+    min-width: 24px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #8e44ad;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}

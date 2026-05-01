@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; background-color: #0f172a; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); }
+        .blur-overlay { backdrop-filter: blur(8px); background: rgba(0,0,0,0.4); }
+        .toast {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(100%) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        :root {
+            --surface: #0f172a;
+            --surface-container-low: #1e293b;
+            --surface-container-high: #334155;
+            --primary: #8b5cf6;
+            --on-primary: #ffffff;
+            --on-surface: #f8fafc;
+            --on-surface-variant: #94a3b8;
+            --outline-variant: #334155;
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-50 min-h-screen font-['Inter']">
+    <!-- Sidebar Navigation -->
+    <aside class="fixed left-0 top-0 h-full w-72 glass-panel border-r border-white/5 z-50 flex flex-col">
+        <div class="p-8 flex items-center gap-4">
+            <img src="logo.png" class="w-10 h-10 object-contain rounded-lg shadow-lg shadow-purple-500/20" alt="Logo" />
+            <div>
+                <h1 class="text-xl font-bold tracking-tight font-['Space_Grotesk']">HermitVault</h1>
+                <p class="text-[10px] text-purple-400 font-bold uppercase tracking-widest opacity-80">Secure Storage</p>
+            </div>
+        </div>
+        
+        <div class="px-4 mb-8">
+            <button onclick="showAddModal()" class="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 transition-all flex items-center justify-center gap-2 group">
+                <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
+                Add New
+            </button>
+        </div>
+
+        <nav class="flex-1 space-y-1">
+            <a id="nav-all" onclick="switchView('all')" class="bg-purple-600/20 text-purple-400 border-r-2 border-purple-500 rounded-r-full mr-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer">
+                <span class="material-symbols-outlined">shield</span>
+                <span class="font-semibold">All Items</span>
+            </a>
+            <a onclick="exportExcel()" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer">
+                <span class="material-symbols-outlined">description</span>
+                <span>Export Excel</span>
+            </a>
+            <a id="nav-trash" onclick="switchView('trash')" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer">
+                <span class="material-symbols-outlined">delete</span>
+                <span>Trash</span>
+            </a>
+        </nav>
+
+        <div class="p-6 border-t border-white/5">
+            <a href="index.html" class="flex items-center gap-3 text-slate-500 hover:text-red-400 transition-colors">
+                <span class="material-symbols-outlined">lock_open</span>
+                <span class="text-sm font-medium">Lock Vault</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="ml-72 p-12">
+        <header class="flex justify-between items-center mb-12">
+            <div class="relative w-full max-w-xl">
+                <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+                <input id="search-input-el" oninput="filterVault()" class="w-full bg-slate-900/50 border border-white/5 rounded-full py-4 pl-14 pr-6 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-slate-600" placeholder="Search your secure vault..." type="text" />
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <button onclick="showSettingsModal()" class="p-3 text-slate-400 hover:bg-slate-800/50 hover:text-purple-400 rounded-full transition-all" title="Vault Settings">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg">H</div>
+            </div>
+        </header>
+
+        <div class="flex justify-between items-end mb-10">
+            <div>
+                <h2 id="view-title" class="text-4xl font-bold font-['Space_Grotesk'] text-white">All Items</h2>
+                <p id="view-subtitle" class="text-slate-500 mt-2">Managing your secure credentials</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="toggleSort()" class="px-6 py-3 bg-slate-800/50 text-slate-300 rounded-full border border-white/5 hover:bg-slate-800 transition-all flex items-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-sm">sort_by_alpha</span>
+                    Sort: <span id="sort-label">Default</span>
+                </button>
+                <button onclick="showAddModal()" class="px-6 py-3 bg-purple-600/10 text-purple-400 border border-purple-500/20 rounded-full hover:bg-purple-600/20 transition-all flex items-center gap-2 text-sm font-bold">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    New Item
+                </button>
+            </div>
+        </div>
+
+        <!-- Credentials Grid -->
+        <div id="credential-grid-el" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            <!-- Dynamic Content -->
+        </div>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-10 right-10 z-[200] flex flex-col gap-4"></div>
+
+    <!-- Confirm Modal -->
+    <div id="modal-confirm-el" class="fixed inset-0 z-[150] flex items-center justify-center blur-overlay hidden">
+        <div class="bg-slate-900 w-full max-w-sm p-8 rounded-3xl border border-white/10 shadow-2xl text-center">
+            <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-red-500 text-3xl">warning</span>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-bold text-white mb-2">Are you sure?</h3>
+            <p id="confirm-msg" class="text-slate-500 text-sm mb-8">This action cannot be undone.</p>
+            <div class="flex gap-4">
+                <button onclick="closeConfirm(false)" class="flex-1 py-3 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
+                <button onclick="closeConfirm(true)" id="confirm-btn" class="flex-1 py-3 bg-red-600 text-white rounded-full font-bold shadow-lg shadow-red-600/20 hover:bg-red-500 transition-all">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-add-el" class="fixed inset-0 z-[100] flex items-center justify-center blur-overlay hidden">
+        <div class="bg-slate-900 w-full max-w-md p-10 rounded-3xl border border-white/10 shadow-2xl">
+            <h2 id="modal-title-el" class="text-2xl font-bold text-white mb-8">Add Credential</h2>
+            <input type="hidden" id="edit-index-el" value="-1" />
+            <div class="space-y-6">
+                <div>
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">Service Name</label>
+                    <input id="add-site-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" placeholder="e.g. GitHub" type="text"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">Username</label>
+                    <input id="add-user-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" placeholder="user@example.com" type="text"/>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">Password</label>
+                    <div class="relative">
+                        <input id="add-pass-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="••••••••"/>
+                        <button onclick="generatePass()" class="absolute right-12 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
+                            <span class="material-symbols-outlined text-xl">auto_fix_high</span>
+                        </button>
+                        <button onclick="togglePass('add-pass-el')" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
+                            <span id="add-pass-el-icon" class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">Icon URL (Optional)</label>
+                    <input id="add-icon-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" placeholder="https://logo.com/icon.png" type="text"/>
+                </div>
+            </div>
+            <div class="flex gap-4 mt-10">
+                <button onclick="hideAddModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
+                <button onclick="saveCredential()" class="flex-1 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 hover:scale-[1.02] active:scale-95 transition-all">Save Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings-el" class="fixed inset-0 z-[100] flex items-center justify-center blur-overlay hidden">
+        <div class="bg-slate-900 w-full max-w-md p-10 rounded-3xl border border-white/10 shadow-2xl">
+            <h2 class="text-2xl font-bold text-white mb-2">Vault Settings</h2>
+            <p class="text-slate-500 text-sm mb-8">Update your master security passphrase.</p>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">New Master Password</label>
+                    <div class="relative">
+                        <input id="new-master-pass-el" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="Must be strong"/>
+                        <button onclick="togglePass('new-master-pass-el')" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
+                            <span id="new-master-pass-el-icon" class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </div>
+                    <p id="settings-error-el" class="text-red-400 text-xs mt-3 ml-2 hidden"></p>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-10">
+                <button onclick="hideSettingsModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
+                <button onclick="changeMasterPass()" class="flex-1 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 hover:scale-[1.02] active:scale-95 transition-all">Update Vault</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCredentials = [];
+        let trashCredentials = [];
+        let currentView = 'all';
+        let sortAZ = false;
+
+        async function refreshVault() {
+            if (currentView === 'all') {
+                allCredentials = await window.pywebview.api.get_credentials();
+                let displayData = [...allCredentials];
+                if (sortAZ) displayData.sort((a, b) => a.site.localeCompare(b.site));
+                renderCredentials(displayData);
+                document.getElementById('view-title').innerText = 'All Items';
+                document.getElementById('view-subtitle').innerText = `Managing ${allCredentials.length} secure credentials`;
+            } else {
+                trashCredentials = await window.pywebview.api.get_trash();
+                let displayData = [...trashCredentials];
+                if (sortAZ) displayData.sort((a, b) => a.site.localeCompare(b.site));
+                renderCredentials(displayData);
+                document.getElementById('view-title').innerText = 'Trash';
+                document.getElementById('view-subtitle').innerText = `${trashCredentials.length} items in trash`;
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const navAll = document.getElementById('nav-all');
+            const navTrash = document.getElementById('nav-trash');
+            
+            if (view === 'all') {
+                navAll.className = "bg-purple-600/20 text-purple-400 border-r-2 border-purple-500 rounded-r-full mr-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
+                navTrash.className = "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
+            } else {
+                navTrash.className = "bg-purple-600/20 text-purple-400 border-r-2 border-purple-500 rounded-r-full mr-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
+                navAll.className = "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
+            }
+            refreshVault();
+        }
+
+        function renderCredentials(creds) {
+            const grid = document.getElementById('credential-grid-el');
+            if (!grid) return;
+            
+            if (creds.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-32 opacity-20"><span class="material-symbols-outlined text-6xl block mb-4">folder_off</span>${currentView === 'all' ? 'No credentials found.' : 'Trash is empty.'}</div>`;
+                return;
+            }
+
+            grid.innerHTML = creds.map((c, i) => `
+                <div class="glass-panel p-8 rounded-[32px] border border-white/5 hover:border-purple-500/40 transition-all duration-500 group relative">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden border border-white/5 group-hover:scale-110 transition-transform">
+                            ${c.icon ? `<img src="${c.icon}" class="w-full h-full object-cover" onerror="this.src='';this.innerHTML='<span class=\\'material-symbols-outlined text-purple-500\\'>shield</span>'"/>` : `<span class="material-symbols-outlined text-purple-500">shield</span>`}
+                        </div>
+                        <div class="flex gap-2">
+                            ${currentView === 'all' ? `
+                                <button onclick="editCred(${i})" class="p-2 text-slate-500 hover:text-purple-400 transition-colors" title="Edit"><span class="material-symbols-outlined">edit</span></button>
+                                <button onclick="deleteCred(${i})" class="p-2 text-slate-500 hover:text-red-500 transition-colors" title="Move to Trash"><span class="material-symbols-outlined">delete</span></button>
+                            ` : `
+                                <button onclick="restoreCred(${i})" class="p-2 text-slate-500 hover:text-green-500 transition-colors" title="Restore"><span class="material-symbols-outlined">restore</span></button>
+                                <button onclick="permanentDelete(${i})" class="p-2 text-slate-500 hover:text-red-600 transition-colors" title="Delete Permanently"><span class="material-symbols-outlined">delete_forever</span></button>
+                            `}
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-1">${c.site}</h3>
+                    <p class="text-slate-500 text-sm mb-8">${c.user}</p>
+                    <div class="flex items-center gap-3 pt-6 border-t border-white/5">
+                        <button onclick="copyToClipboard('${c.password}')" class="flex-1 py-3 bg-slate-950 hover:bg-slate-900 text-slate-300 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                            Copy Password
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterVault() {
+            const q = document.getElementById('search-input-el').value.toLowerCase();
+            const source = currentView === 'all' ? allCredentials : trashCredentials;
+            const filtered = source.filter(c => c.site.toLowerCase().includes(q) || c.user.toLowerCase().includes(q));
+            renderCredentials(filtered);
+        }
+
+        function toggleSort() {
+            sortAZ = !sortAZ;
+            document.getElementById('sort-label').innerText = sortAZ ? 'A-Z' : 'Default';
+            refreshVault();
+        }
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            const color = type === 'success' ? 'text-green-400' : 'text-red-400';
+            const bg = type === 'success' ? 'bg-green-500/10' : 'bg-red-500/10';
+            
+            toast.className = `toast glass-panel px-6 py-4 rounded-2xl border border-white/5 shadow-2xl flex items-center gap-4 min-w-[300px]`;
+            toast.innerHTML = `
+                <div class="w-10 h-10 ${bg} rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined ${color}">${icon}</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-white">${msg}</p>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px) scale(0.95)';
+                toast.style.transition = 'all 0.3s ease-in';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        let confirmCallback = null;
+        function askConfirm(title, msg, btnText, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-msg').innerText = msg;
+            document.getElementById('confirm-btn').innerText = btnText;
+            document.getElementById('modal-confirm-el').classList.remove('hidden');
+            confirmCallback = callback;
+        }
+
+        function closeConfirm(result) {
+            document.getElementById('modal-confirm-el').classList.add('hidden');
+            if (result && confirmCallback) confirmCallback();
+            confirmCallback = null;
+        }
+
+        async function deleteCred(i) {
+            askConfirm("Move to Trash?", "This item will be moved to the trash bin.", "Move to Trash", async () => {
+                await window.pywebview.api.delete_credential(i);
+                refreshVault();
+                showToast("Moved to trash", "success");
+            });
+        }
+
+        async function restoreCred(i) {
+            await window.pywebview.api.restore_credential(i);
+            refreshVault();
+            showToast("Credential restored");
+        }
+
+        async function permanentDelete(i) {
+            askConfirm("Delete Permanently?", "This action is irreversible and data will be lost.", "Delete Forever", async () => {
+                await window.pywebview.api.permanent_delete(i);
+                refreshVault();
+                showToast("Permanently deleted", "error");
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast("Password copied to clipboard");
+        }
+
+        async function exportExcel() {
+            const success = await window.pywebview.api.export_excel();
+            if (success) showToast("Vault exported to Excel");
+        }
+
+        function showAddModal() {
+            document.getElementById('modal-title-el').innerText = 'Add Credential';
+            document.getElementById('edit-index-el').value = '-1';
+            document.getElementById('modal-add-el').classList.remove('hidden');
+        }
+
+        function editCred(i) {
+            const c = allCredentials[i];
+            document.getElementById('modal-title-el').innerText = 'Edit Credential';
+            document.getElementById('edit-index-el').value = i;
+            document.getElementById('add-site-el').value = c.site;
+            document.getElementById('add-user-el').value = c.user;
+            document.getElementById('add-pass-el').value = c.password;
+            document.getElementById('add-icon-el').value = c.icon || '';
+            document.getElementById('modal-add-el').classList.remove('hidden');
+        }
+
+        function hideAddModal() {
+            document.getElementById('modal-add-el').classList.add('hidden');
+            document.getElementById('add-site-el').value = '';
+            document.getElementById('add-user-el').value = '';
+            document.getElementById('add-pass-el').value = '';
+            document.getElementById('add-icon-el').value = '';
+        }
+
+        async function saveCredential() {
+            const site = document.getElementById('add-site-el').value;
+            const user = document.getElementById('add-user-el').value;
+            const pass = document.getElementById('add-pass-el').value;
+            const icon = document.getElementById('add-icon-el').value;
+            const index = parseInt(document.getElementById('edit-index-el').value);
+
+            if (!site || !user || !pass) return;
+            
+            if (index === -1) await window.pywebview.api.add_credential(site, user, pass, icon);
+            else await window.pywebview.api.update_credential(index, site, user, pass, icon);
+            
+            hideAddModal();
+            refreshVault();
+        }
+
+        function showSettingsModal() {
+            document.getElementById('modal-settings-el').classList.remove('hidden');
+        }
+
+        function hideSettingsModal() {
+            document.getElementById('modal-settings-el').classList.add('hidden');
+            document.getElementById('new-master-pass-el').value = '';
+            document.getElementById('settings-error-el').classList.add('hidden');
+        }
+
+        async function changeMasterPass() {
+            const pass = document.getElementById('new-master-pass-el').value;
+            if (!pass) return;
+            const res = await window.pywebview.api.change_master_password(pass);
+            if (res.success) {
+                showToast("Master password updated!");
+                hideSettingsModal();
+            } else {
+                const err = document.getElementById('settings-error-el');
+                err.innerText = res.error;
+                err.classList.remove('hidden');
+            }
+        }
+
+        async function generatePass() {
+            const pass = await window.pywebview.api.generate_password();
+            document.getElementById('add-pass-el').value = pass;
+        }
+
+        function togglePass(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            if (el.type === 'password') {
+                el.type = 'text';
+                if (icon) icon.innerText = 'visibility_off';
+            } else {
+                el.type = 'password';
+                if (icon) icon.innerText = 'visibility';
+            }
+        }
+
+        window.addEventListener('pywebviewready', refreshVault);
+        setTimeout(refreshVault, 500);
+    </script>
+</body>
+</html>
