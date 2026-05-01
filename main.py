@@ -4,10 +4,12 @@ import os
 from PIL import Image, ImageTk
 from vault_storage import VaultManager
 from crypto_logic import generate_secure_password, check_password_strength
+from config_manager import load_config, save_config
 from tkinter import messagebox
 
 # Configuration
-ctk.set_appearance_mode("dark")
+CONFIG = load_config()
+ctk.set_appearance_mode(CONFIG.get("appearance", "dark"))
 
 # Premium Color Palette
 ACCENT_COLOR = "#8e44ad"  # Royal Purple
@@ -92,6 +94,17 @@ class HermitVaultApp(ctk.CTk):
                                      segmented_button_unselected_hover_color="#333333")
         self.tabview.pack(pady=10, padx=40)
         
+        # Theme Selector on Login Screen
+        theme_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        theme_frame.pack(side="bottom", pady=(0, 20))
+        ctk.CTkLabel(theme_frame, text="Theme:", font=("Outfit", 10), text_color=SECONDARY_TEXT).pack(side="left", padx=5)
+        self.theme_menu = ctk.CTkOptionMenu(theme_frame, values=["Dark", "Light"], 
+                                          width=100, height=25, font=("Outfit", 10),
+                                          fg_color="#333333", button_color=ACCENT_COLOR,
+                                          command=self.change_appearance_mode)
+        self.theme_menu.set(CONFIG.get("appearance", "dark").capitalize())
+        self.theme_menu.pack(side="left")
+
         tab_unlock = self.tabview.add("Unlock Vault")
         tab_create = self.tabview.add("New Vault")
 
@@ -228,6 +241,17 @@ class HermitVaultApp(ctk.CTk):
                                   fg_color="#333333", hover_color="#444444", corner_radius=25)
         logout_btn.pack(pady=10)
         
+        # Appearance Switch in Sidebar
+        theme_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        theme_frame.pack(side="bottom", pady=20)
+        ctk.CTkLabel(theme_frame, text="Appearance:", font=("Outfit", 11), text_color=SECONDARY_TEXT).pack(pady=5)
+        self.sidebar_theme = ctk.CTkOptionMenu(theme_frame, values=["Dark", "Light"], 
+                                             width=120, height=30, font=("Outfit", 11),
+                                             fg_color="#333333", button_color=ACCENT_COLOR,
+                                             command=self.change_appearance_mode)
+        self.sidebar_theme.set(CONFIG.get("appearance", "dark").capitalize())
+        self.sidebar_theme.pack()
+
         stats_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         stats_frame.pack(side="bottom", fill="x", pady=40)
         
@@ -300,6 +324,12 @@ class HermitVaultApp(ctk.CTk):
         if messagebox.askyesno("Delete", "Are you sure you want to delete this credential?"):
             self.vault_manager.delete_credential(index)
             self.refresh_vault_list()
+
+    def change_appearance_mode(self, new_mode: str):
+        mode = new_mode.lower()
+        ctk.set_appearance_mode(mode)
+        CONFIG["appearance"] = mode
+        save_config(CONFIG)
 
     def toggle_visibility(self, entry, button):
         if entry.cget("show") == "*":
