@@ -105,6 +105,7 @@ class HermitVaultApp(ctk.CTk):
                                           fg_color=INPUT_BG, button_color=ACCENT_COLOR,
                                           text_color=TEXT_COLOR,
                                           dropdown_fg_color=CARD_COLOR,
+                                          border_width=2, border_color=BORDER_COLOR,
                                           command=self.change_appearance_mode)
         self.theme_menu.set(CONFIG.get("appearance", "dark").capitalize())
         self.theme_menu.pack(side="left")
@@ -123,6 +124,7 @@ class HermitVaultApp(ctk.CTk):
                                                 text_color=TEXT_COLOR,
                                                 dropdown_fg_color=CARD_COLOR, 
                                                 dropdown_text_color=TEXT_COLOR,
+                                                border_width=2, border_color=BORDER_COLOR,
                                                 corner_radius=20)
             self.vault_select.pack(pady=10)
             
@@ -262,6 +264,7 @@ class HermitVaultApp(ctk.CTk):
                                              fg_color=INPUT_BG, button_color=ACCENT_COLOR,
                                              text_color=TEXT_COLOR, dropdown_fg_color=CARD_COLOR,
                                              dropdown_text_color=TEXT_COLOR, corner_radius=15,
+                                             border_width=2, border_color=BORDER_COLOR,
                                              command=self.change_appearance_mode)
         self.sidebar_theme.set(CONFIG.get("appearance", "dark").capitalize())
         self.sidebar_theme.pack()
