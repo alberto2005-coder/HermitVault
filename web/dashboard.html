@@ -59,6 +59,10 @@
                 <span class="material-symbols-outlined">description</span>
                 <span>Export Excel</span>
             </a>
+            <a onclick="backupVault()" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer">
+                <span class="material-symbols-outlined">cloud_download</span>
+                <span>Backup Vault</span>
+            </a>
             <a id="nav-trash" onclick="switchView('trash')" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer">
                 <span class="material-symbols-outlined">delete</span>
                 <span>Trash</span>
@@ -402,6 +406,11 @@
         async function exportExcel() {
             const success = await window.pywebview.api.export_excel();
             if (success) showToast("Vault exported to Excel");
+        }
+
+        async function backupVault() {
+            const success = await window.pywebview.api.backup_vault();
+            if (success) showToast("Full vault backup created successfully");
         }
 
         function showAddModal() {

@@ -11,6 +11,7 @@
 - **🧙 Generador Avanzado:** Panel de creación de contraseñas con control granular sobre longitud, mayúsculas, números y símbolos.
 - **📊 Medidor de Fortaleza (zxcvbn):** Análisis de entropía de nivel profesional que detecta patrones, repeticiones y palabras del diccionario en tiempo real.
 - **🎨 Personalización Premium:** Soporte para iconos personalizados por servicio (favicon) y estética ultra-moderna con Glassmorphism.
+- **💾 Backup & Importación:** Exporta tu bóveda completa a un archivo de respaldo cifrado o importa bóvedas existentes de forma sencilla.
 - **📉 Exportación a Excel:** Genera informes de tus credenciales de forma rápida y sencilla.
 - **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.

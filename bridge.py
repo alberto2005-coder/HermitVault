@@ -99,3 +99,33 @@ class HermitAPI:
     def permanent_delete(self, index):
         if not self.vault_manager: return False
         return self.vault_manager.permanent_delete(index)
+
+    def backup_vault(self):
+        if not self.vault_manager or not self.current_vault: return False
+        src = f"{self.current_vault}.vault"
+        if not os.path.exists(src): return False
+        
+        path = filedialog.asksaveasfilename(
+            defaultextension=".vault",
+            filetypes=[("HermitVault files", "*.vault")],
+            initialfile=f"BACKUP_{self.current_vault}.vault"
+        )
+        if path:
+            import shutil
+            shutil.copy2(src, path)
+            return True
+        return False
+
+    def import_vault(self):
+        path = filedialog.askopenfilename(
+            filetypes=[("HermitVault files", "*.vault")]
+        )
+        if path:
+            import shutil
+            filename = os.path.basename(path)
+            # Ensure we don't overwrite if it exists? Or ask?
+            # For simplicity, copy to current dir
+            dest = os.path.join(os.getcwd(), filename)
+            shutil.copy2(path, dest)
+            return True
+        return False
