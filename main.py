@@ -100,15 +100,18 @@ class HermitVaultApp(ctk.CTk):
         theme_frame = ctk.CTkFrame(frame, fg_color="transparent")
         theme_frame.pack(side="bottom", pady=(0, 20))
         ctk.CTkLabel(theme_frame, text="Theme:", font=("Outfit", 10), text_color=SECONDARY_TEXT).pack(side="left", padx=5)
-        self.theme_menu = ctk.CTkOptionMenu(theme_frame, values=["Dark", "Light"], 
+        
+        theme_border = ctk.CTkFrame(theme_frame, fg_color="transparent", border_width=2, border_color=BORDER_COLOR, corner_radius=10)
+        theme_border.pack(side="left")
+        
+        self.theme_menu = ctk.CTkOptionMenu(theme_border, values=["Dark", "Light"], 
                                           width=120, height=30, font=("Outfit", 11),
                                           fg_color=INPUT_BG, button_color=ACCENT_COLOR,
                                           text_color=TEXT_COLOR,
                                           dropdown_fg_color=CARD_COLOR,
-                                          border_width=2, border_color=BORDER_COLOR,
                                           command=self.change_appearance_mode)
         self.theme_menu.set(CONFIG.get("appearance", "dark").capitalize())
-        self.theme_menu.pack(side="left")
+        self.theme_menu.pack()
 
         tab_unlock = self.tabview.add("Unlock Vault")
         tab_create = self.tabview.add("New Vault")
@@ -119,14 +122,17 @@ class HermitVaultApp(ctk.CTk):
                         font=("Outfit", 14), text_color=SECONDARY_TEXT).pack(pady=50)
         else:
             ctk.CTkLabel(tab_unlock, text="Select Vault:", font=("Outfit", 13), text_color=TEXT_COLOR).pack(pady=(20, 5))
-            self.vault_select = ctk.CTkOptionMenu(tab_unlock, values=vaults, width=320, height=45, 
+            
+            vault_border = ctk.CTkFrame(tab_unlock, fg_color="transparent", border_width=2, border_color=BORDER_COLOR, corner_radius=20)
+            vault_border.pack(pady=10)
+            
+            self.vault_select = ctk.CTkOptionMenu(vault_border, values=vaults, width=320, height=45, 
                                                 fg_color=INPUT_BG, button_color=ACCENT_COLOR, 
                                                 text_color=TEXT_COLOR,
                                                 dropdown_fg_color=CARD_COLOR, 
                                                 dropdown_text_color=TEXT_COLOR,
-                                                border_width=2, border_color=BORDER_COLOR,
                                                 corner_radius=20)
-            self.vault_select.pack(pady=10)
+            self.vault_select.pack()
             
             # Password row for Unlock
         pass_container = ctk.CTkFrame(tab_unlock, fg_color="transparent")
@@ -259,12 +265,15 @@ class HermitVaultApp(ctk.CTk):
         theme_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
         theme_frame.pack(side="bottom", pady=20)
         ctk.CTkLabel(theme_frame, text="Appearance:", font=("Outfit", 11), text_color=SECONDARY_TEXT).pack(pady=5)
-        self.sidebar_theme = ctk.CTkOptionMenu(theme_frame, values=["Dark", "Light"], 
+        
+        sidebar_theme_border = ctk.CTkFrame(theme_frame, fg_color="transparent", border_width=2, border_color=BORDER_COLOR, corner_radius=15)
+        sidebar_theme_border.pack()
+        
+        self.sidebar_theme = ctk.CTkOptionMenu(sidebar_theme_border, values=["Dark", "Light"], 
                                              width=140, height=35, font=("Outfit", 11),
                                              fg_color=INPUT_BG, button_color=ACCENT_COLOR,
                                              text_color=TEXT_COLOR, dropdown_fg_color=CARD_COLOR,
                                              dropdown_text_color=TEXT_COLOR, corner_radius=15,
-                                             border_width=2, border_color=BORDER_COLOR,
                                              command=self.change_appearance_mode)
         self.sidebar_theme.set(CONFIG.get("appearance", "dark").capitalize())
         self.sidebar_theme.pack()
