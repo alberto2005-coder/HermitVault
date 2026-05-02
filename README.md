@@ -46,6 +46,14 @@
    python main.py
    ```
 
+### 📦 Generar Ejecutable (.EXE)
+
+Si quieres generar un archivo `.exe` para usar HermitVault sin necesidad de Python:
+
+1. Ejecuta el archivo `build_exe.bat` incluido en la carpeta raíz.
+2. Espera a que PyInstaller termine el proceso.
+3. Encontrarás tu ejecutable listo para usar en la carpeta `dist/`.
+
 ## 🔒 Arquitectura de Seguridad
 
 Los datos se almacenan en archivos binarios `.vault`. El archivo tiene la siguiente estructura:
