@@ -51,6 +51,8 @@ Los datos se almacenan en archivos binarios `.vault`. El archivo tiene la siguie
 1. Primeros 16 bytes: **Salt** criptográfico único generado por bóveda.
 2. Resto del archivo: **Payload cifrado** con AES-256 (CBC/GCM) que contiene el JSON de credenciales y papelera.
 
+Para prevenir ataques de diccionario locales, HermitVault mantiene un archivo de estado de seguridad ofuscado (`.cache.dat`) que rastrea los intentos fallidos e impone bloqueos temporales persistentes, incluso tras reiniciar la aplicación.
+
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
