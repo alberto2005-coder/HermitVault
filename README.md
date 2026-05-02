@@ -12,6 +12,8 @@
 - **📊 Medidor de Fortaleza (zxcvbn):** Análisis de entropía de nivel profesional que detecta patrones, repeticiones y palabras del diccionario en tiempo real.
 - **🎨 Personalización Premium:** Soporte para iconos personalizados por servicio (favicon) y estética ultra-moderna con Glassmorphism.
 - **💾 Backup & Importación:** Exporta tu bóveda completa a un archivo de respaldo cifrado o importa bóvedas existentes de forma sencilla.
+- **🛡️ Protección Anti-Brute-Force:** Sistema de bloqueo progresivo con retardo exponencial y persistencia entre reinicios.
+- **🧩 Verificación Humana (Slide to Verify):** Deslizador dinámico con objetivo aleatorio para prevenir ataques automatizados y bots locales.
 - **📉 Exportación a Excel:** Genera informes de tus credenciales de forma rápida y sencilla.
 - **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.

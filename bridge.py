@@ -9,16 +9,71 @@ class HermitAPI:
     def __init__(self):
         self.vault_manager = None
         self.current_vault = None
+        self.security_file = ".cache.dat"  # Obfuscated name
+        self._load_security_state()
+
+    def _load_security_state(self):
+        import json, base64
+        if os.path.exists(self.security_file):
+            try:
+                with open(self.security_file, "r") as f:
+                    # Simple obfuscation to prevent casual editing
+                    encoded_data = f.read()
+                    decoded_data = base64.b64decode(encoded_data).decode('utf-8')
+                    self.security_state = json.loads(decoded_data)
+            except:
+                self.security_state = {"failed_attempts": 0, "lock_until": 0}
+        else:
+            self.security_state = {"failed_attempts": 0, "lock_until": 0}
+
+    def _save_security_state(self):
+        import json, base64
+        data_str = json.dumps(self.security_state)
+        encoded_data = base64.b64encode(data_str.encode('utf-8')).decode('utf-8')
+        with open(self.security_file, "w") as f:
+            f.write(encoded_data)
+
+    def get_security_state(self):
+        import time
+        now = int(time.time())
+        # Clean up old locks
+        if now > self.security_state["lock_until"]:
+            self.security_state["lock_until"] = 0
+            self._save_security_state()
+        return self.security_state
+
+    def register_failed_attempt(self):
+        import time
+        self.security_state["failed_attempts"] += 1
+        # Exponential backoff: 2^n seconds (max 30s delay)
+        delay = min(pow(2, self.security_state["failed_attempts"]), 30)
+        self.security_state["lock_until"] = int(time.time()) + delay
+        self._save_security_state()
+        return {"lock_until": self.security_state["lock_until"], "delay": delay}
+
+    def reset_failed_attempts(self):
+        self.security_state["failed_attempts"] = 0
+        self.security_state["lock_until"] = 0
+        self._save_security_state()
 
     def list_vaults(self):
         return VaultManager.list_available_vaults()
 
     def unlock_vault(self, name, password):
+        state = self.get_security_state()
+        import time
+        if state["lock_until"] > time.time():
+            return {"success": False, "error": "SYSTEM_LOCKED"}
+
         self.vault_manager = VaultManager(name)
         if self.vault_manager.unlock_vault(password):
             self.current_vault = name
+            self.reset_failed_attempts()
             return {"success": True, "vault": name}
-        return {"success": False, "error": "Invalid password"}
+        
+        # On failure
+        lock_info = self.register_failed_attempt()
+        return {"success": False, "error": "Invalid password", "lock_until": lock_info["lock_until"], "delay": lock_info["delay"]}
 
     def create_vault(self, name, password):
         score, _, _ = check_password_strength(password)

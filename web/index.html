@@ -37,6 +37,31 @@
             from { transform: translateY(100%) scale(0.9); opacity: 0; }
             to { transform: translateY(0) scale(1); opacity: 1; }
         }
+        .verify-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 56px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 28px;
+            outline: none;
+            transition: all .2s;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .verify-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 50px;
+            height: 50px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            border: 3px solid rgba(255,255,255,0.2);
+            transition: transform 0.2s;
+        }
+        .verify-slider:active::-webkit-slider-thumb { transform: scale(1.1); }
     </style>
     <script id="tailwind-config">
         tailwind.config = {
@@ -206,9 +231,22 @@
                         <p id="create-error-el" class="text-red-400 text-xs mt-2 ml-4 hidden"></p>
                     </div>
                 </div>
+                
+                <!-- Human Verification (Slide to Verify) -->
+                <div id="verify-container" class="hidden space-y-4 py-4">
+                    <label class="block font-label-sm text-purple-400 text-center uppercase tracking-widest">
+                        Slide to <span id="verify-target-val" class="text-white font-bold">85</span>%
+                    </label>
+                    <div class="relative group">
+                        <input type="range" id="verify-slider-el" value="0" min="0" max="100" class="verify-slider" oninput="updateStatus(this.value)" onchange="checkVerify(this.value)">
+                        <div id="verify-status-text" class="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-500 font-label-sm tracking-widest opacity-30">
+                            VERIFYING...
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- Primary Action -->
-            <button onclick="handleAction()"
+            <button id="action-btn-main" onclick="handleAction()"
                 class="w-full bg-primary-container hover:bg-[#9b59b6] text-white font-label-sm py-5 rounded-full transition-all duration-200 active:scale-[0.98] shadow-lg shadow-primary-container/20">
                 <span id="action-btn-text">Unlock Vault</span>
             </button>
@@ -233,9 +271,21 @@
     </div>
     <script>
         let currentTab = 'unlock';
+        let lockUntil = 0;
+        let isVerified = true;
+        let verifyTarget = 0;
 
         async function init() {
             if (window.pywebview && window.pywebview.api) {
+                const state = await window.pywebview.api.get_security_state();
+                if (state.lock_until > Date.now() / 1000) {
+                    lockUntil = state.lock_until * 1000;
+                }
+                
+                if (state.failed_attempts >= 2) {
+                    showVerifyUI();
+                }
+
                 const vaults = await window.pywebview.api.list_vaults();
                 const select = document.getElementById('vault-select-el');
                 if (select) {
@@ -245,6 +295,64 @@
                         select.innerHTML = '<option value="">No vaults found. Create one!</option>';
                     }
                 }
+            }
+            checkLock();
+        }
+
+        function showVerifyUI() {
+            isVerified = false;
+            verifyTarget = Math.floor(Math.random() * 60) + 30; // Random target between 30 and 90
+            document.getElementById('verify-target-val').innerText = verifyTarget;
+            document.getElementById('verify-slider-el').value = 0;
+            document.getElementById('verify-container').classList.remove('hidden', 'opacity-40', 'pointer-events-none');
+            document.getElementById('verify-status-text').innerText = "VERIFYING...";
+        }
+
+        function updateStatus(val) {
+            if (isVerified) return;
+            document.getElementById('verify-status-text').innerText = `${val}%`;
+        }
+
+        function checkVerify(val) {
+            if (isVerified) return;
+            
+            const status = document.getElementById('verify-status-text');
+            val = parseInt(val);
+            
+            // Only verify if they LET GO on the right number
+            if (Math.abs(val - verifyTarget) <= 2) {
+                isVerified = true;
+                document.getElementById('verify-container').classList.add('opacity-40', 'pointer-events-none');
+                status.innerText = "VERIFIED ✓";
+                showToast("Humanity verified", "success");
+                checkLock();
+            } else {
+                // If they let go on the wrong number, reset to 0 to make it harder
+                document.getElementById('verify-slider-el').value = 0;
+                status.innerText = "TRY AGAIN";
+                setTimeout(() => { if(!isVerified) status.innerText = "0%"; }, 1000);
+            }
+        }
+
+        function checkLock() {
+            const now = Date.now();
+            const btn = document.getElementById('action-btn-main');
+            const btnText = document.getElementById('action-btn-text');
+            
+            if (now < lockUntil) {
+                const remaining = Math.ceil((lockUntil - now) / 1000);
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btnText.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> LOCKED (${remaining}s)</span>`;
+                setTimeout(checkLock, 1000);
+            } else if (!isVerified && currentTab === 'unlock') {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btnText.innerText = 'Verify above first';
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnText.innerText = currentTab === 'unlock' ? 'Unlock Vault' : 'Create New Vault';
             }
         }
 
@@ -322,6 +430,8 @@
         }
 
         async function handleAction() {
+            if (Date.now() < lockUntil) return;
+
             // Hide previous inline errors
             document.getElementById('unlock-error-el').classList.add('hidden');
             document.getElementById('create-error-el').classList.add('hidden');
@@ -337,12 +447,25 @@
                 }
                 
                 const res = await window.pywebview.api.unlock_vault(name, pass);
-                if (res.success) window.location.href = 'dashboard.html';
-                else {
-                    showError('unlock-error-el', res.error);
-                    showToast(res.error, "error");
+                if (res.success) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    if (res.error === "SYSTEM_LOCKED") {
+                        showToast("System is currently locked. Please wait.", "error");
+                    } else if (res.lock_until) {
+                        lockUntil = res.lock_until * 1000;
+                        showVerifyUI();
+                        
+                        showError('unlock-error-el', res.error);
+                        showToast(`${res.error}. Locked for ${res.delay}s`, "error");
+                    } else {
+                        showError('unlock-error-el', res.error);
+                        showToast(res.error, "error");
+                    }
+                    checkLock();
                 }
             } else {
+                // ... (Create logic remains same)
                 const name = document.getElementById('create-name-el').value;
                 const pass = document.getElementById('create-pass-el').value;
                 
