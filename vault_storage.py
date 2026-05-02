@@ -12,6 +12,7 @@ class VaultManager:
         self.key = None
         self.data = []
         self.trash = []
+        self.version = 0
 
     @staticmethod
     def list_available_vaults():
@@ -48,9 +49,11 @@ class VaultManager:
             if isinstance(decoded, list):
                 self.data = decoded
                 self.trash = []
+                self.version = 0
             else:
                 self.data = decoded.get("data", [])
                 self.trash = decoded.get("trash", [])
+                self.version = decoded.get("version", 0)
             return True
         except Exception as e:
             print(f"Unlock failed: {e}")
@@ -63,8 +66,11 @@ class VaultManager:
         
         payload = {
             "data": self.data,
-            "trash": self.trash
+            "trash": self.trash,
+            "version": self.version
         }
+        import time
+        payload["last_updated"] = int(time.time())
         json_data = json.dumps(payload)
         encrypted_payload = encrypt_data(json_data, self.key)
         
@@ -73,22 +79,28 @@ class VaultManager:
             f.write(encrypted_payload)
 
     def add_credential(self, site, user, password, icon=""):
+        import time
         self.data.append({
             "site": site,
             "user": user,
             "password": password,
-            "icon": icon
+            "icon": icon,
+            "last_modified": int(time.time())
         })
+        self.version += 1
         self.save_vault()
 
     def update_credential(self, index, site, user, password, icon=""):
         if 0 <= index < len(self.data):
+            import time
             self.data[index] = {
                 "site": site,
                 "user": user,
                 "password": password,
-                "icon": icon
+                "icon": icon,
+                "last_modified": int(time.time())
             }
+            self.version += 1
             self.save_vault()
             return True
         return False
@@ -114,6 +126,32 @@ class VaultManager:
             self.save_vault()
             return True
         return False
+
+    def merge_vaults(self, other_data, other_trash):
+        """Merges another vault's data into this one based on timestamps."""
+        # Merge Data
+        my_map = {(c['site'], c['user']): c for c in self.data}
+        for other in other_data:
+            key = (other['site'], other['user'])
+            if key in my_map:
+                # Keep newest
+                if other.get('last_modified', 0) > my_map[key].get('last_modified', 0):
+                    my_map[key] = other
+            else:
+                my_map[key] = other
+        self.data = list(my_map.values())
+
+        # Merge Trash (simple union for now)
+        my_trash_map = {(c['site'], c['user']): c for c in self.trash}
+        for other in other_trash:
+            key = (other['site'], other['user'])
+            if key not in my_trash_map:
+                my_trash_map[key] = other
+        self.trash = list(my_trash_map.values())
+        
+        self.version += 1
+        self.save_vault()
+        return True
 
     def permanent_delete(self, index):
         if 0 <= index < len(self.trash):

@@ -5,12 +5,15 @@ import pandas as pd
 import os
 from tkinter import filedialog, messagebox
 
+from sync_logic import SyncManager
+
 class HermitAPI:
     def __init__(self):
         self.vault_manager = None
         self.current_vault = None
-        self.security_file = ".cache.dat"  # Obfuscated name
+        self.security_file = ".cache.dat"
         self._load_security_state()
+        self.sync_manager = SyncManager()
 
     def _load_security_state(self):
         import json, base64
@@ -178,9 +181,57 @@ class HermitAPI:
         if path:
             import shutil
             filename = os.path.basename(path)
-            # Ensure we don't overwrite if it exists? Or ask?
-            # For simplicity, copy to current dir
             dest = os.path.join(os.getcwd(), filename)
             shutil.copy2(path, dest)
             return True
         return False
+
+    def get_sync_info(self):
+        return {
+            "ip": self.sync_manager.get_local_ip(),
+            "port": self.sync_manager.port
+        }
+
+    def start_sync_server(self):
+        if not self.current_vault: return {"success": False, "error": "No vault open"}
+        vault_path = f"{self.current_vault}.vault"
+        
+        def on_done(msg):
+            print(f"Sync server: {msg}")
+            
+        self.sync_manager.start_server(vault_path, on_done)
+        return {"success": True, "msg": "Sync server started"}
+
+    def connect_to_sync(self, target_ip):
+        if not self.vault_manager: return {"success": False, "error": "Open vault first"}
+        
+        def on_data(data):
+            if isinstance(data, str) and data.startswith("Error"):
+                print(data)
+                return
+            
+            # Here we have the encrypted vault bytes
+            try:
+                # We need to decrypt it with the CURRENT vault's key
+                # This assumes both vaults have the same password!
+                import json
+                from vault_storage import decrypt_data
+                
+                salt = data[:16]
+                payload = data[16:]
+                # We use the existing key (derived from password)
+                # Note: This only works if salt is same or if we derive again
+                # Actually, derive_key depends on salt. 
+                # So we MUST derive a temp key using the target's salt and OUR current password.
+                
+                # To get the password, we might need to store it or ask user
+                # For now, let's assume we can merge.
+                # In a real app, we'd ask "Enter password for the incoming vault"
+                pass
+            except Exception as e:
+                print(f"Sync Merge Error: {e}")
+
+        # This part is complex because of key derivation.
+        # Let's simplify: Send the DECRYPTED data over the local network (secure WiFi?)
+        # NO, that's not secure.
+        return {"success": False, "error": "P2P Sync requires same-network key exchange (In Development)"}

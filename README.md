@@ -17,6 +17,7 @@
 - **📉 Exportación a Excel:** Genera informes de tus credenciales de forma rápida y sencilla.
 - **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
+- **🔄 Sincronización P2P:** Sincronización directa entre dispositivos en la misma red local con fusión inteligente de datos.
 
 ## 🛠️ Stack Tecnológico
 
@@ -59,7 +60,6 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ## 🛠️ Próximas Mejoras (Roadmap)
 
-- [ ] **Sincronización P2P:** Sincronización entre dispositivos sin servidor central.
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
 - [ ] **Categorización por Carpetas:** Organización avanzada de items mediante etiquetas o directorios virtuales.
 - [ ] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.

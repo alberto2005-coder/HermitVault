@@ -67,6 +67,10 @@
                 <span class="material-symbols-outlined">delete</span>
                 <span>Trash</span>
             </a>
+            <a id="nav-sync" onclick="switchView('sync')" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer">
+                <span class="material-symbols-outlined">sync</span>
+                <span>P2P Sync</span>
+            </a>
         </nav>
 
         <div class="p-6 border-t border-white/5">
@@ -112,6 +116,38 @@
         <!-- Credentials Grid -->
         <div id="credential-grid-el" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             <!-- Dynamic Content -->
+        </div>
+
+        <!-- Sync View (Hidden by default) -->
+        <div id="sync-view-el" class="hidden space-y-10">
+            <div class="bg-slate-900/40 backdrop-blur-xl p-10 rounded-[40px] border border-white/5">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-purple-400">sensors</span>
+                    Local Network Info
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-white/5">
+                        <span class="text-xs text-slate-500 uppercase tracking-widest block mb-2">Your IP Address</span>
+                        <span id="sync-ip-el" class="text-2xl font-mono text-purple-400">Loading...</span>
+                    </div>
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-white/5">
+                        <span class="text-xs text-slate-500 uppercase tracking-widest block mb-2">Sync Port</span>
+                        <span id="sync-port-el" class="text-2xl font-mono text-slate-300">5555</span>
+                    </div>
+                </div>
+                
+                <div class="mt-10 flex flex-wrap gap-4">
+                    <button onclick="startSyncServer()" class="px-8 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 hover:scale-105 transition-all">
+                        Be a Host (Send)
+                    </button>
+                    <div class="flex-1 min-w-[300px] relative">
+                        <input id="sync-target-ip" class="w-full bg-slate-950 border-none text-white rounded-full px-8 py-4 focus:ring-2 focus:ring-purple-500/50 outline-none" placeholder="Enter Host IP (e.g. 192.168.1.10)"/>
+                        <button onclick="connectToSync()" class="absolute right-2 top-2 bottom-2 px-6 bg-slate-800 text-purple-400 rounded-full font-bold hover:bg-slate-700 transition-all">
+                            Connect & Sync
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -254,6 +290,24 @@
         let sortAZ = false;
 
         async function refreshVault() {
+            const grid = document.getElementById('credential-grid-el');
+            const syncView = document.getElementById('sync-view-el');
+            
+            if (currentView === 'sync') {
+                grid.classList.add('hidden');
+                syncView.classList.remove('hidden');
+                document.getElementById('view-title').innerText = 'P2P Sync';
+                document.getElementById('view-subtitle').innerText = 'Transfer your vault between devices on the same network';
+                
+                const info = await window.pywebview.api.get_sync_info();
+                document.getElementById('sync-ip-el').innerText = info.ip;
+                document.getElementById('sync-port-el').innerText = info.port;
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            syncView.classList.add('hidden');
+
             if (currentView === 'all') {
                 allCredentials = await window.pywebview.api.get_credentials();
                 let displayData = [...allCredentials];
@@ -275,14 +329,19 @@
             currentView = view;
             const navAll = document.getElementById('nav-all');
             const navTrash = document.getElementById('nav-trash');
+            const navSync = document.getElementById('nav-sync');
             
-            if (view === 'all') {
-                navAll.className = "bg-purple-600/20 text-purple-400 border-r-2 border-purple-500 rounded-r-full mr-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
-                navTrash.className = "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
-            } else {
-                navTrash.className = "bg-purple-600/20 text-purple-400 border-r-2 border-purple-500 rounded-r-full mr-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
-                navAll.className = "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
-            }
+            // Reset all
+            [navAll, navTrash, navSync].forEach(el => {
+                el.className = "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
+            });
+
+            const activeClass = "bg-purple-600/20 text-purple-400 border-r-2 border-purple-500 rounded-r-full mr-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer";
+            
+            if (view === 'all') navAll.className = activeClass;
+            else if (view === 'trash') navTrash.className = activeClass;
+            else if (view === 'sync') navSync.className = activeClass;
+            
             refreshVault();
         }
 
@@ -557,7 +616,25 @@
             }
         }
 
-        window.addEventListener('pywebviewready', refreshVault);
+        async function startSyncServer() {
+            const res = await window.pywebview.api.start_sync_server();
+            if (res.success) showToast("Broadcasting! Other devices can now connect to your IP.");
+            else showToast(res.error, "error");
+        }
+
+        async function connectToSync() {
+            const ip = document.getElementById('sync-target-ip').value;
+            if (!ip) return showToast("Enter target IP address", "error");
+            
+            showToast("Connecting to peer...");
+            const res = await window.pywebview.api.connect_to_sync(ip);
+            if (res.success) {
+                showToast("Vault synced and merged!");
+                refreshVault();
+            } else {
+                showToast(res.error, "error");
+            }
+        }
         setTimeout(refreshVault, 500);
     </script>
 </body>
