@@ -125,7 +125,11 @@ class VaultManager:
     def restore_credential(self, index):
         if 0 <= index < len(self.trash):
             item = self.trash.pop(index)
-            self.data.append(item)
+            if item.get("trash_type") == "note":
+                del item["trash_type"]
+                self.notes.append(item)
+            else:
+                self.data.append(item)
             self.save_vault()
             return True
         return False
@@ -183,8 +187,11 @@ class VaultManager:
         return self.notes
 
     def delete_note(self, index):
+        """Moves a note to trash."""
         if 0 <= index < len(self.notes):
-            self.notes.pop(index)
+            note = self.notes.pop(index)
+            note["trash_type"] = "note"
+            self.trash.append(note)
             self.version += 1
             self.save_vault()
             return True

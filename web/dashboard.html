@@ -153,11 +153,6 @@
                 </div>
         </div>
 
-        <!-- Notes View -->
-        <div id="notes-view-el" class="hidden space-y-8 px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="notes-grid-el">
-                <!-- Notes will be rendered here -->
-            </div>
         </div>
     </main>
 
@@ -362,15 +357,16 @@
             }
 
             if (currentView === 'notes') {
-                grid.classList.add('hidden');
+                grid.classList.remove('hidden');
                 syncView.classList.add('hidden');
-                notesView.classList.remove('hidden');
                 if (sortBtn) sortBtn.classList.add('hidden');
                 document.getElementById('view-title').innerText = 'Safe Notes';
                 document.getElementById('view-subtitle').innerText = 'Your encrypted secret notes';
                 
-                allNotes = await window.pywebview.api.get_notes();
-                renderNotes(allNotes);
+                const notes = await window.pywebview.api.get_notes();
+                // Mark as notes for rendering
+                const displayNotes = notes.map((n, i) => ({...n, type: 'note', original_index: i}));
+                renderCredentials(displayNotes);
                 return;
             }
             
@@ -380,12 +376,13 @@
             if (sortBtn) sortBtn.classList.remove('hidden');
 
             if (currentView === 'all') {
-                allCredentials = await window.pywebview.api.get_credentials();
+                const items = await window.pywebview.api.get_all_items();
+                allCredentials = items; 
                 let displayData = [...allCredentials];
-                if (sortAZ) displayData.sort((a, b) => a.site.localeCompare(b.site));
+                if (sortAZ) displayData.sort((a, b) => (a.site || a.title).localeCompare(b.site || b.title));
                 renderCredentials(displayData);
                 document.getElementById('view-title').innerText = 'All Items';
-                document.getElementById('view-subtitle').innerText = `Managing ${allCredentials.length} secure credentials`;
+                document.getElementById('view-subtitle').innerText = `Managing ${allCredentials.length} secure items`;
             } else {
                 trashCredentials = await window.pywebview.api.get_trash();
                 let displayData = [...trashCredentials];
@@ -421,38 +418,69 @@
         function renderCredentials(creds) {
             const grid = document.getElementById('credential-grid-el');
             if (!grid) return;
-            
-            if (creds.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-32 opacity-20"><span class="material-symbols-outlined text-6xl block mb-4">folder_off</span>${currentView === 'all' ? 'No credentials found.' : 'Trash is empty.'}</div>`;
-                return;
-            }
+            grid.innerHTML = '';
 
-            grid.innerHTML = creds.map((c, i) => `
+            const cards = creds.map((c, i) => {
+                const isNote = c.type === 'note' || c.trash_type === 'note';
+                const icon = isNote ? 'description' : 'shield_person';
+                const title = isNote ? (c.title || 'Untitled Note') : c.site;
+                const subtitle = isNote ? 'Secure Note' : c.user;
+                const idx = (c.original_index !== undefined) ? c.original_index : i;
+
+                return `
                 <div class="glass-panel p-8 rounded-[32px] border border-white/5 hover:border-purple-500/40 transition-all duration-500 group relative">
                     <div class="flex justify-between items-start mb-8">
                         <div class="w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden border border-white/5 group-hover:scale-110 transition-transform">
-                            ${c.icon ? `<img src="${c.icon}" class="w-full h-full object-cover" onerror="this.src='';this.innerHTML='<span class=\\'material-symbols-outlined text-purple-500\\'>shield</span>'"/>` : `<span class="material-symbols-outlined text-purple-500">shield</span>`}
+                            ${!isNote && c.icon ? `<img src="${c.icon}" class="w-full h-full object-cover" onerror="this.src='';this.innerHTML='<span class=\\'material-symbols-outlined text-purple-500\\'>shield</span>'"/>` : `<span class="material-symbols-outlined text-purple-500">${icon}</span>`}
                         </div>
                         <div class="flex gap-2">
                             ${currentView === 'all' ? `
-                                <button onclick="editCred(${i})" class="p-2 text-slate-500 hover:text-purple-400 transition-colors" title="Edit"><span class="material-symbols-outlined">edit</span></button>
-                                <button onclick="deleteCred(${i})" class="p-2 text-slate-500 hover:text-red-500 transition-colors" title="Move to Trash"><span class="material-symbols-outlined">delete</span></button>
+                                <button onclick="${isNote ? `editNote(${idx})` : `editCred(${idx})`}" class="p-2 text-slate-500 hover:text-purple-400 transition-colors" title="Edit"><span class="material-symbols-outlined">edit</span></button>
+                                <button onclick="${isNote ? `deleteNote(${idx})` : `deleteCred(${idx})`}" class="p-2 text-slate-500 hover:text-red-500 transition-colors" title="Move to Trash"><span class="material-symbols-outlined">delete</span></button>
                             ` : `
                                 <button onclick="restoreCred(${i})" class="p-2 text-slate-500 hover:text-green-500 transition-colors" title="Restore"><span class="material-symbols-outlined">restore</span></button>
                                 <button onclick="permanentDelete(${i})" class="p-2 text-slate-500 hover:text-red-600 transition-colors" title="Delete Permanently"><span class="material-symbols-outlined">delete_forever</span></button>
                             `}
                         </div>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-1">${c.site}</h3>
-                    <p class="text-slate-500 text-sm mb-8">${c.user}</p>
+                    <h3 class="text-xl font-bold text-white mb-1 truncate">${title}</h3>
+                    <p class="text-slate-500 text-sm mb-8 truncate">${subtitle}</p>
                     <div class="flex items-center gap-3 pt-6 border-t border-white/5">
-                        <button onclick="copyToClipboard('${c.password}')" class="flex-1 py-3 bg-slate-950 hover:bg-slate-900 text-slate-300 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-sm">content_copy</span>
-                            Copy Password
-                        </button>
+                        ${isNote ? `
+                            <button onclick="viewNote(${idx})" class="flex-1 py-3 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">visibility</span>
+                                View Note
+                            </button>
+                        ` : `
+                            <button onclick="copyToClipboard('${c.password}')" class="flex-1 py-3 bg-slate-950 hover:bg-slate-900 text-slate-300 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                                Copy Password
+                            </button>
+                        `}
                     </div>
                 </div>
-            `).join('');
+                `;
+            });
+
+            // Add the "New Item" card at the end
+            if (currentView !== 'trash' && currentView !== 'sync') {
+                const addIcon = currentView === 'notes' ? 'description' : 'shield';
+                const addText = currentView === 'notes' ? 'Add New Note' : 'Add New Credential';
+                cards.push(`
+                <div onclick="handleNewItem()" class="border-2 border-dashed border-white/5 rounded-[32px] p-8 flex flex-col items-center justify-center gap-4 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all cursor-pointer group min-h-[300px]">
+                    <div class="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-slate-500 group-hover:text-purple-400">add</span>
+                    </div>
+                    <span class="text-slate-500 font-bold uppercase tracking-widest text-xs group-hover:text-slate-300">${addText}</span>
+                </div>
+                `);
+            }
+
+            if (creds.length === 0 && (currentView === 'trash' || currentView === 'sync')) {
+                grid.innerHTML = `<div class="col-span-full text-center py-32 opacity-20"><span class="material-symbols-outlined text-6xl block mb-4">folder_off</span>Trash is empty.</div>`;
+            } else {
+                grid.innerHTML = cards.join('');
+            }
         }
 
         function filterVault() {
@@ -710,6 +738,7 @@
         }
         function renderNotes(notes) {
             const grid = document.getElementById('notes-grid-el');
+            if (!grid) return;
             grid.innerHTML = '';
             
             notes.forEach((note, index) => {
@@ -729,9 +758,9 @@
                             </button>
                         </div>
                     </div>
-                    <h3 class="text-xl font-bold text-white mb-2 truncate">${note.title}</h3>
+                    <h3 class="text-xl font-bold text-white mb-2 truncate">${note.title || 'Untitled'}</h3>
                     <p class="text-slate-500 text-sm line-clamp-3 overflow-hidden mb-6 leading-relaxed">
-                        ${note.content}
+                        ${note.content || 'No content'}
                     </p>
                     <div class="flex justify-between items-center text-[10px] uppercase tracking-widest font-bold">
                         <span class="text-slate-600">Secure Note</span>
@@ -743,9 +772,9 @@
                 grid.appendChild(card);
             });
 
-            // Add "New Note" card
+            // Add "New Note" card - ALWAYS SHOW THIS
             const addCard = document.createElement('div');
-            addCard.className = "border-2 border-dashed border-white/5 rounded-[32px] p-8 flex flex-col items-center justify-center gap-4 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all cursor-pointer group";
+            addCard.className = "border-2 border-dashed border-white/5 rounded-[32px] p-8 flex flex-col items-center justify-center gap-4 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all cursor-pointer group min-h-[250px]";
             addCard.onclick = () => showNoteModal();
             addCard.innerHTML = `
                 <div class="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform">

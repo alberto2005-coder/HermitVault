@@ -19,6 +19,8 @@
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
 - **🔄 Sincronización P2P:** Sincronización directa entre dispositivos en la misma red local con fusión inteligente de datos.
 - **📝 Notas Seguras:** Almacenamiento cifrado de texto libre para guardar secretos más allá de las contraseñas.
+- **🗑️ Papelera Inteligente:** Soporte para recuperación de tanto credenciales como notas borradas.
+- **🔍 Vista Unificada:** Panel global "All Items" para ver y gestionar todo el contenido de la bóveda de un vistazo.
 
 ## 🛠️ Stack Tecnológico
 

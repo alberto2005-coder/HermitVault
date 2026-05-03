@@ -92,6 +92,27 @@ class HermitAPI:
         if not self.vault_manager: return []
         return self.vault_manager.get_credentials()
 
+    def get_all_items(self):
+        if not self.vault_manager: return []
+        creds = self.vault_manager.get_credentials()
+        # Mark as credential
+        new_creds = []
+        for i, c in enumerate(creds):
+            item = c.copy()
+            item["type"] = "credential"
+            item["original_index"] = i
+            new_creds.append(item)
+        
+        notes = self.vault_manager.get_notes()
+        new_notes = []
+        for i, n in enumerate(notes):
+            item = n.copy()
+            item["type"] = "note"
+            item["original_index"] = i
+            new_notes.append(item)
+        
+        return new_creds + new_notes
+
     def add_credential(self, site, user, password, icon=""):
         if not self.vault_manager: return False
         self.vault_manager.add_credential(site, user, password, icon)
