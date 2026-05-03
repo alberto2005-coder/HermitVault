@@ -12,6 +12,7 @@ class VaultManager:
         self.key = None
         self.data = []
         self.trash = []
+        self.notes = []
         self.version = 0
 
     @staticmethod
@@ -53,6 +54,7 @@ class VaultManager:
             else:
                 self.data = decoded.get("data", [])
                 self.trash = decoded.get("trash", [])
+                self.notes = decoded.get("notes", [])
                 self.version = decoded.get("version", 0)
             return True
         except Exception as e:
@@ -67,6 +69,7 @@ class VaultManager:
         payload = {
             "data": self.data,
             "trash": self.trash,
+            "notes": self.notes,
             "version": self.version
         }
         import time
@@ -152,6 +155,40 @@ class VaultManager:
         self.version += 1
         self.save_vault()
         return True
+
+    def add_note(self, title, content):
+        import time
+        self.notes.append({
+            "title": title,
+            "content": content,
+            "last_modified": int(time.time())
+        })
+        self.version += 1
+        self.save_vault()
+
+    def update_note(self, index, title, content):
+        if 0 <= index < len(self.notes):
+            import time
+            self.notes[index] = {
+                "title": title,
+                "content": content,
+                "last_modified": int(time.time())
+            }
+            self.version += 1
+            self.save_vault()
+            return True
+        return False
+
+    def get_notes(self):
+        return self.notes
+
+    def delete_note(self, index):
+        if 0 <= index < len(self.notes):
+            self.notes.pop(index)
+            self.version += 1
+            self.save_vault()
+            return True
+        return False
 
     def permanent_delete(self, index):
         if 0 <= index < len(self.trash):

@@ -18,6 +18,7 @@
 - **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
 - **🔄 Sincronización P2P:** Sincronización directa entre dispositivos en la misma red local con fusión inteligente de datos.
+- **📝 Notas Seguras:** Almacenamiento cifrado de texto libre para guardar secretos más allá de las contraseñas.
 
 ## 🛠️ Stack Tecnológico
 
@@ -71,7 +72,6 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
 - [ ] **Categorización por Carpetas:** Organización avanzada de items mediante etiquetas o directorios virtuales.
 - [ ] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
-- [ ] **Soporte para Notas Seguras:** Almacenamiento de texto libre cifrado más allá de simples credenciales.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
