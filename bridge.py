@@ -226,6 +226,75 @@ class HermitAPI:
             return True
         return False
 
+    def browser_import(self):
+        """Import credentials from CSV (Chrome/Edge) or generic TXT files"""
+        if not self.vault_manager: return {"success": False, "error": "Vault not unlocked"}
+        
+        path = filedialog.askopenfilename(
+            filetypes=[
+                ("Credential Files", "*.csv *.txt"),
+                ("CSV files", "*.csv"),
+                ("Text files", "*.txt"),
+                ("All files", "*.*")
+            ]
+        )
+        if not path: return {"success": False, "error": "No file selected"}
+
+        imported_count = 0
+        try:
+            # Try parsing as CSV first
+            if path.lower().endswith('.csv'):
+                df = pd.read_csv(path)
+                # Normalize column names to lowercase
+                df.columns = [c.lower() for c in df.columns]
+                
+                # Mapping for common browser export headers
+                site_cols = ['url', 'site', 'website', 'name', 'title']
+                user_cols = ['username', 'user', 'login', 'email', 'user_name']
+                pass_cols = ['password', 'pass', 'word', 'credential']
+
+                for _, row in df.iterrows():
+                    site = next((row[c] for c in site_cols if c in df.columns), "Imported Site")
+                    user = next((row[c] for c in user_cols if c in df.columns), "Imported User")
+                    password = next((row[c] for c in pass_cols if c in df.columns), "")
+                    
+                    if password:
+                        self.vault_manager.add_credential(str(site), str(user), str(password), folder="Imported")
+                        imported_count += 1
+            
+            # Try parsing as TXT with separators
+            else:
+                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        line = line.strip()
+                        if not line: continue
+                        
+                        # Try common separators: , ; : | \t
+                        parts = None
+                        for sep in [',', ';', ':', '|', '\t']:
+                            if sep in line:
+                                candidate = line.split(sep)
+                                if len(candidate) >= 3:
+                                    parts = candidate
+                                    break
+                        
+                        if parts and len(parts) >= 3:
+                            site = parts[0].strip()
+                            user = parts[1].strip()
+                            password = parts[2].strip()
+                            self.vault_manager.add_credential(site, user, password, folder="Imported")
+                            imported_count += 1
+
+            if imported_count > 0:
+                return {"success": True, "count": imported_count}
+            else:
+                return {"success": False, "error": "No valid credentials found in file"}
+                
+        except Exception as e:
+            print(f"Import error: {e}")
+            return {"success": False, "error": f"Error parsing file: {str(e)}"}
+
     def get_sync_info(self):
         return {
             "ip": self.sync_manager.get_local_ip(),

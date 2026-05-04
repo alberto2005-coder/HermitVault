@@ -105,6 +105,10 @@
                 <span class="material-symbols-outlined text-sm">cloud_download</span>
                 <span class="text-sm">Backup Vault</span>
             </a>
+            <a onclick="browserImport()" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer" title="Import from File">
+                <span class="material-symbols-outlined text-sm">upload</span>
+                <span class="text-sm">Import from File</span>
+            </a>
             <a id="nav-trash" onclick="switchView('trash')" class="text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-full mx-4 px-6 py-4 flex items-center gap-4 transition-all cursor-pointer" title="Trash">
                 <span class="material-symbols-outlined text-sm">delete</span>
                 <span class="text-sm">Trash</span>
@@ -1038,6 +1042,17 @@
                 document.getElementById('sync-client-section').classList.add('hidden');
             }
             else showToast(res.error, "error");
+        }
+
+        async function browserImport() {
+            showToast("Opening file picker...");
+            const res = await window.pywebview.api.browser_import();
+            if (res.success) {
+                showToast(`Successfully imported ${res.count} items!`, "success");
+                refreshVault();
+            } else if (res.error) {
+                showToast(res.error, "error");
+            }
         }
 
         async function stopSyncServer() {

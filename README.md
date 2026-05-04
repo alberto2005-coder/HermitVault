@@ -76,7 +76,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 
 ## 🛠️ Próximas Mejoras (Roadmap)
 
-- [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
+- [x] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
