@@ -74,9 +74,5 @@ Para prevenir ataques de diccionario locales, HermitVault mantiene un archivo de
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
 
-## 🛠️ Próximas Mejoras (Roadmap)
-
-- [x] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
-
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
