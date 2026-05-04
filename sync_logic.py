@@ -7,6 +7,7 @@ class SyncManager:
     def __init__(self, port=5555):
         self.port = port
         self.running = False
+        self.server_sock = None
 
     def get_local_ip(self):
         try:
@@ -18,18 +19,21 @@ class SyncManager:
         except:
             return "127.0.0.1"
 
-    def start_server(self, vault_path, on_success):
+    def start_server(self, vault_path, on_success, port=None):
         """Starts a temporary server to send the vault file."""
+        if port: self.port = int(port)
+        if self.running: return
+        
         def run():
             try:
-                server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                server.bind(('', self.port))
-                server.listen(1)
-                server.settimeout(60) # Timeout after 1 min
+                self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self.server_sock.bind(('', self.port))
+                self.server_sock.listen(1)
+                self.server_sock.settimeout(60) # Timeout after 1 min
                 
                 self.running = True
-                conn, addr = server.accept()
+                conn, addr = self.server_sock.accept()
                 
                 with open(vault_path, "rb") as f:
                     data = f.read()
@@ -39,17 +43,36 @@ class SyncManager:
                     conn.sendall(data)
                 
                 conn.close()
-                server.close()
+                self.server_sock.close()
                 on_success(f"Sent vault to {addr[0]}")
+            except socket.timeout:
+                on_success("Hosting timed out (no connection received)")
             except Exception as e:
-                on_success(f"Error: {e}")
+                if self.running: # Only report if not manually stopped
+                    on_success(f"Error: {e}")
             finally:
                 self.running = False
+                if self.server_sock:
+                    try: self.server_sock.close()
+                    except: pass
+                self.server_sock = None
 
         threading.Thread(target=run, daemon=True).start()
 
-    def receive_vault(self, target_ip, on_data):
+    def stop_server(self):
+        self.running = False
+        if self.server_sock:
+            try:
+                # Force close the socket to break the accept() or timeout
+                self.server_sock.close()
+            except:
+                pass
+            self.server_sock = None
+        return True
+
+    def receive_vault(self, target_ip, on_data, port=None):
         """Connects to a server to receive the vault file."""
+        if port: self.port = port
         def run():
             try:
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

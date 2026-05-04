@@ -17,10 +17,11 @@
 - **📉 Exportación a Excel:** Genera informes de tus credenciales de forma rápida y sencilla.
 - **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
-- **🔄 Sincronización P2P:** Sincronización directa entre dispositivos en la misma red local con fusión inteligente de datos.
-- **📝 Notas Seguras:** Almacenamiento cifrado de texto libre para guardar secretos más allá de las contraseñas.
-- **🗑️ Papelera Inteligente:** Soporte para recuperación de tanto credenciales como notas borradas.
-- **🔍 Vista Unificada:** Panel global "All Items" para ver y gestionar todo el contenido de la bóveda de un vistazo.
+- **🔄 Sincronización P2P Avanzada:** Sincronización directa entre dispositivos en la misma red local con fusión inteligente de datos. Ahora incluye **control de puertos personalizable** y **gestión de estado de host** con indicadores en vivo y botón de cancelación.
+- **📝 Notas Seguras:** Almacenamiento cifrado de texto libre para guardar secretos más allá de las contraseñas, integrado en el flujo de trabajo global.
+- **🗑️ Papelera Inteligente:** Soporte para recuperación de tanto credenciales como notas borradas con confirmaciones de seguridad.
+- **🔍 Vista Unificada & Creación Rápida:** Panel global "All Items" para gestionar todo el contenido de un vistazo, incluyendo un **selector inteligente de tipo de item** al crear nuevos secretos.
+- **📊 Mejoras de UX:** Validaciones inteligentes al exportar a Excel, estados de carga visuales y notificaciones (toasts) interactivas para una experiencia fluida.
 
 ## 🛠️ Stack Tecnológico
 

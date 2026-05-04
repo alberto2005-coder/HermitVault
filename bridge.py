@@ -232,46 +232,79 @@ class HermitAPI:
             "port": self.sync_manager.port
         }
 
-    def start_sync_server(self):
+    def start_sync_server(self, port=None):
         if not self.current_vault: return {"success": False, "error": "No vault open"}
         vault_path = f"{self.current_vault}.vault"
         
         def on_done(msg):
             print(f"Sync server: {msg}")
             
-        self.sync_manager.start_server(vault_path, on_done)
-        return {"success": True, "msg": "Sync server started"}
+        try:
+            p = int(port) if port else None
+            self.sync_manager.start_server(vault_path, on_done, p)
+            return {"success": True, "msg": "Sync server started"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
-    def connect_to_sync(self, target_ip):
+    def stop_sync_server(self):
+        if self.sync_manager:
+            return self.sync_manager.stop_server()
+        return False
+
+    def connect_to_sync(self, target_ip, port=None):
         if not self.vault_manager: return {"success": False, "error": "Open vault first"}
         
         def on_data(data):
             if isinstance(data, str) and data.startswith("Error"):
-                print(data)
+                print(f"Sync error: {data}")
                 return
             
-            # Here we have the encrypted vault bytes
             try:
-                # We need to decrypt it with the CURRENT vault's key
-                # This assumes both vaults have the same password!
-                import json
-                from vault_storage import decrypt_data
+                # Assuming the received vault has the same master password as the current one
+                # We need the salt from the received data (first 16 bytes)
+                remote_salt = data[:16]
+                remote_encrypted = data[16:]
                 
-                salt = data[:16]
-                payload = data[16:]
-                # We use the existing key (derived from password)
-                # Note: This only works if salt is same or if we derive again
-                # Actually, derive_key depends on salt. 
-                # So we MUST derive a temp key using the target's salt and OUR current password.
+                from crypto_logic import decrypt_data
+                decrypted_json = decrypt_data(remote_encrypted, self.vault_manager.key)
+                remote_payload = json.loads(decrypted_json)
                 
-                # To get the password, we might need to store it or ask user
-                # For now, let's assume we can merge.
-                # In a real app, we'd ask "Enter password for the incoming vault"
-                pass
-            except Exception as e:
-                print(f"Sync Merge Error: {e}")
+                remote_creds = remote_payload.get("data", [])
+                remote_notes = remote_payload.get("notes", [])
+                
+                # Merge Credentials
+                added_count = 0
+                local_creds = self.vault_manager.data
+                for rc in remote_creds:
+                    # Check if exists (by site and user)
+                    exists = any(lc['site'] == rc['site'] and lc['user'] == rc['user'] for lc in local_creds)
+                    if not exists:
+                        local_creds.append(rc)
+                        added_count += 1
+                
+                # Merge Notes
+                notes_added = 0
+                local_notes = self.vault_manager.notes
+                for rn in remote_notes:
+                    # Check if exists (by title and content)
+                    exists = any(ln['title'] == rn['title'] and ln['content'] == rn['content'] for ln in local_notes)
+                    if not exists:
+                        local_notes.append(rn)
+                        notes_added += 1
+                
+                if added_count > 0 or notes_added > 0:
+                    self.vault_manager.version += 1
+                    self.vault_manager.save_vault()
+                    print(f"Merged: {added_count} credentials and {notes_added} notes added.")
+                else:
+                    print("Sync complete: No new items found.")
 
-        # This part is complex because of key derivation.
-        # Let's simplify: Send the DECRYPTED data over the local network (secure WiFi?)
-        # NO, that's not secure.
-        return {"success": False, "error": "P2P Sync requires same-network key exchange (In Development)"}
+            except Exception as e:
+                print(f"Failed to merge received vault: {e}")
+
+        try:
+            p = int(port) if port else None
+            self.sync_manager.receive_vault(target_ip, on_data, p)
+            return {"success": True, "msg": "Connection established, waiting for data..."}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
