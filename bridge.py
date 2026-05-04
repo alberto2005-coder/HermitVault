@@ -113,27 +113,27 @@ class HermitAPI:
         
         return new_creds + new_notes
 
-    def add_credential(self, site, user, password, icon=""):
+    def add_credential(self, site, user, password, icon="", folder=""):
         if not self.vault_manager: return False
-        self.vault_manager.add_credential(site, user, password, icon)
+        self.vault_manager.add_credential(site, user, password, icon, folder)
         return True
 
-    def update_credential(self, index, site, user, password, icon=""):
+    def update_credential(self, index, site, user, password, icon="", folder=""):
         if not self.vault_manager: return False
-        return self.vault_manager.update_credential(index, site, user, password, icon)
+        return self.vault_manager.update_credential(index, site, user, password, icon, folder)
 
     def get_notes(self):
         if not self.vault_manager: return []
         return self.vault_manager.get_notes()
 
-    def add_note(self, title, content):
+    def add_note(self, title, content, folder=""):
         if not self.vault_manager: return False
-        self.vault_manager.add_note(title, content)
+        self.vault_manager.add_note(title, content, folder)
         return True
 
-    def update_note(self, index, title, content):
+    def update_note(self, index, title, content, folder=""):
         if not self.vault_manager: return False
-        self.vault_manager.update_note(index, title, content)
+        self.vault_manager.update_note(index, title, content, folder)
         return True
 
     def delete_note(self, index):

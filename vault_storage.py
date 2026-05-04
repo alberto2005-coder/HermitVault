@@ -81,19 +81,20 @@ class VaultManager:
             f.write(self.salt)
             f.write(encrypted_payload)
 
-    def add_credential(self, site, user, password, icon=""):
+    def add_credential(self, site, user, password, icon="", folder=""):
         import time
         self.data.append({
             "site": site,
             "user": user,
             "password": password,
             "icon": icon,
+            "folder": folder,
             "last_modified": int(time.time())
         })
         self.version += 1
         self.save_vault()
 
-    def update_credential(self, index, site, user, password, icon=""):
+    def update_credential(self, index, site, user, password, icon="", folder=""):
         if 0 <= index < len(self.data):
             import time
             self.data[index] = {
@@ -101,6 +102,7 @@ class VaultManager:
                 "user": user,
                 "password": password,
                 "icon": icon,
+                "folder": folder,
                 "last_modified": int(time.time())
             }
             self.version += 1
@@ -160,22 +162,24 @@ class VaultManager:
         self.save_vault()
         return True
 
-    def add_note(self, title, content):
+    def add_note(self, title, content, folder=""):
         import time
         self.notes.append({
             "title": title,
             "content": content,
+            "folder": folder,
             "last_modified": int(time.time())
         })
         self.version += 1
         self.save_vault()
 
-    def update_note(self, index, title, content):
+    def update_note(self, index, title, content, folder=""):
         if 0 <= index < len(self.notes):
             import time
             self.notes[index] = {
                 "title": title,
                 "content": content,
+                "folder": folder,
                 "last_modified": int(time.time())
             }
             self.version += 1

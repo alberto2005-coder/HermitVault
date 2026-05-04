@@ -21,6 +21,7 @@
 - **📝 Notas Seguras:** Almacenamiento cifrado de texto libre para guardar secretos más allá de las contraseñas, integrado en el flujo de trabajo global.
 - **🗑️ Papelera Inteligente:** Soporte para recuperación de tanto credenciales como notas borradas con confirmaciones de seguridad.
 - **🔍 Vista Unificada & Creación Rápida:** Panel global "All Items" para gestionar todo el contenido de un vistazo, incluyendo un **selector inteligente de tipo de item** al crear nuevos secretos.
+- **📂 Organización Contextual (Folders):** Sistema avanzado de carpetas y etiquetas que permite agrupar tanto contraseñas como notas bajo un mismo contexto (ej: Trabajo, Personal, Finanzas). Incluye **navegación unificada por carpeta** y auto-completado inteligente.
 - **📊 Mejoras de UX:** Validaciones inteligentes al exportar a Excel, estados de carga visuales y notificaciones (toasts) interactivas para una experiencia fluida.
 
 ## 🛠️ Stack Tecnológico
@@ -73,7 +74,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 ## 🛠️ Próximas Mejoras (Roadmap)
 
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
-- [ ] **Categorización por Carpetas:** Organización avanzada de items mediante etiquetas o directorios virtuales.
+- [x] **Categorización por Carpetas:** Organización avanzada de items mediante etiquetas o directorios virtuales.
 - [ ] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
 
 ---
