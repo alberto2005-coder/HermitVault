@@ -74,7 +74,6 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 ## 🛠️ Próximas Mejoras (Roadmap)
 
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
-- [x] **Categorización por Carpetas:** Organización avanzada de items mediante etiquetas o directorios virtuales.
 - [ ] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
 
 ---
