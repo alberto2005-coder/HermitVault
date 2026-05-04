@@ -77,7 +77,6 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 ## 🛠️ Próximas Mejoras (Roadmap)
 
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
-- [x] **Soporte de Temas (Modo Claro/Oscuro):** Implementación completa del selector de temas para adaptar la interfaz a diferentes entornos.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
