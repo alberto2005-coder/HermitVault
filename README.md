@@ -16,6 +16,7 @@
 - **🧩 Verificación Humana (Slide to Verify):** Deslizador dinámico con objetivo aleatorio para prevenir ataques automatizados y bots locales.
 - **📉 Exportación a Excel:** Genera informes de tus credenciales de forma rápida y sencilla.
 - **🔐 Cambio de Master Password:** Re-cifrado completo de la bóveda al cambiar la contraseña maestra, impidiendo el uso de la contraseña anterior.
+- **⏱️ Autobloqueo por Inactividad:** Sistema de seguridad que cierra la bóveda automáticamente tras 5 minutos de inactividad para proteger tus datos.
 - **👁️ Visibilidad Controlada:** Alterna la visualización de contraseñas en cualquier campo.
 - **🔄 Sincronización P2P Avanzada:** Sincronización directa entre dispositivos en la misma red local con fusión inteligente de datos. Ahora incluye **control de puertos personalizable** y **gestión de estado de host** con indicadores en vivo y botón de cancelación.
 - **📝 Notas Seguras:** Almacenamiento cifrado de texto libre para guardar secretos más allá de las contraseñas, integrado en el flujo de trabajo global.
@@ -74,7 +75,6 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 ## 🛠️ Próximas Mejoras (Roadmap)
 
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
-- [x] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
