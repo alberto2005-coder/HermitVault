@@ -4,10 +4,18 @@ from crypto_logic import derive_key, encrypt_data, decrypt_data, generate_salt
 
 VAULT_FILE = "vault.vault"
 
+def get_data_dir():
+    """Returns the path to the HermitVault data directory in the user's profile."""
+    data_dir = os.path.join(os.path.expanduser("~"), "HermitVault")
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    return data_dir
+
 class VaultManager:
     def __init__(self, vault_name="vault"):
         self.vault_name = vault_name
-        self.vault_file = f"{vault_name}.vault"
+        self.data_dir = get_data_dir()
+        self.vault_file = os.path.join(self.data_dir, f"{vault_name}.vault")
         self.salt = None
         self.key = None
         self.data = []
@@ -17,8 +25,9 @@ class VaultManager:
 
     @staticmethod
     def list_available_vaults():
-        """Returns a list of vault names found in the current directory."""
-        return [f[:-6] for f in os.listdir(".") if f.endswith(".vault")]
+        """Returns a list of vault names found in the data directory."""
+        data_dir = get_data_dir()
+        return [f[:-6] for f in os.listdir(data_dir) if f.endswith(".vault")]
 
     def vault_exists(self):
         return os.path.exists(self.vault_file)

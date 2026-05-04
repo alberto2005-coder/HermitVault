@@ -459,61 +459,86 @@
         async function handleAction() {
             if (Date.now() < lockUntil) return;
 
+            const btn = document.getElementById('action-btn-main');
+            const btnText = document.getElementById('action-btn-text');
+            const originalText = btnText.innerText;
+
             // Hide previous inline errors
             document.getElementById('unlock-error-el').classList.add('hidden');
             document.getElementById('create-error-el').classList.add('hidden');
 
-            if (currentTab === 'unlock') {
-                const name = document.getElementById('vault-select-el').value;
-                const pass = document.getElementById('unlock-pass-el').value;
-                
-                if (!name) return showToast("No vault selected", "error");
-                if (!pass) {
-                    showError('unlock-error-el', "Password is required");
-                    return showToast("Password field is empty", "error");
-                }
-                
-                const res = await window.pywebview.api.unlock_vault(name, pass);
-                if (res.success) {
-                    window.location.href = 'dashboard.html';
-                } else {
-                    if (res.error === "SYSTEM_LOCKED") {
-                        showToast("System is currently locked. Please wait.", "error");
-                    } else if (res.lock_until) {
-                        lockUntil = res.lock_until * 1000;
-                        showVerifyUI();
-                        
-                        showError('unlock-error-el', res.error);
-                        showToast(`${res.error}. Locked for ${res.delay}s`, "error");
+            try {
+                if (currentTab === 'unlock') {
+                    const name = document.getElementById('vault-select-el').value;
+                    const pass = document.getElementById('unlock-pass-el').value;
+                    
+                    if (!name) return showToast("No vault selected", "error");
+                    if (!pass) {
+                        showError('unlock-error-el', "Password is required");
+                        return showToast("Password field is empty", "error");
+                    }
+                    
+                    btn.disabled = true;
+                    btnText.innerText = "Unlocking...";
+
+                    const res = await window.pywebview.api.unlock_vault(name, pass);
+                    if (res.success) {
+                        window.location.href = 'dashboard.html';
                     } else {
-                        showError('unlock-error-el', res.error);
+                        btn.disabled = false;
+                        btnText.innerText = originalText;
+                        if (res.error === "SYSTEM_LOCKED") {
+                            showToast("System is currently locked. Please wait.", "error");
+                        } else if (res.lock_until) {
+                            lockUntil = res.lock_until * 1000;
+                            showVerifyUI();
+                            showError('unlock-error-el', res.error);
+                            showToast(`${res.error}. Locked for ${res.delay}s`, "error");
+                        } else {
+                            showError('unlock-error-el', res.error);
+                            showToast(res.error, "error");
+                        }
+                        checkLock();
+                    }
+                } else {
+                    const name = document.getElementById('create-name-el').value;
+                    const pass = document.getElementById('create-pass-el').value;
+                    
+                    let missing = [];
+                    if (!name) missing.push("Name");
+                    if (!pass) missing.push("Password");
+                    
+                    if (missing.length > 0) {
+                        const msg = `Missing: ${missing.join(', ')}`;
+                        showError('create-error-el', msg);
+                        return showToast(msg, "error");
+                    }
+
+                    const strength = zxcvbn(pass);
+                    if (strength.score < 3) {
+                        showError('create-error-el', "Password too weak. Please use a stronger passphrase.");
+                        return showToast("Security requirement not met", "error");
+                    }
+                    
+                    btn.disabled = true;
+                    btnText.innerText = "Creating Vault...";
+
+                    const res = await window.pywebview.api.create_vault(name, pass);
+                    if (res.success) {
+                        showToast("Vault created successfully!", "success");
+                        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                    } else {
+                        btn.disabled = false;
+                        btnText.innerText = originalText;
+                        showError('create-error-el', res.error);
                         showToast(res.error, "error");
                     }
-                    checkLock();
                 }
-            } else {
-                // ... (Create logic remains same)
-                const name = document.getElementById('create-name-el').value;
-                const pass = document.getElementById('create-pass-el').value;
-                
-                let missing = [];
-                if (!name) missing.push("Name");
-                if (!pass) missing.push("Password");
-                
-                if (missing.length > 0) {
-                    const msg = `Missing: ${missing.join(', ')}`;
-                    showError('create-error-el', msg);
-                    return showToast(msg, "error");
-                }
-                
-                const res = await window.pywebview.api.create_vault(name, pass);
-                if (res.success) {
-                    showToast("Vault created successfully!");
-                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
-                } else {
-                    showError('create-error-el', res.error);
-                    showToast(res.error, "error");
-                }
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                btnText.innerText = originalText;
+                showToast("Backend connection error. Check if libraries are installed.", "error");
             }
         }
 

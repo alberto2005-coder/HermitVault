@@ -9,9 +9,11 @@ from sync_logic import SyncManager
 
 class HermitAPI:
     def __init__(self):
+        from vault_storage import get_data_dir
         self.vault_manager = None
         self.current_vault = None
-        self.security_file = ".cache.dat"
+        self.data_dir = get_data_dir()
+        self.security_file = os.path.join(self.data_dir, ".cache.dat")
         self._load_security_state()
         self.sync_manager = SyncManager()
 
