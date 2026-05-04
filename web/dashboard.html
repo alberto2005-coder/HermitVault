@@ -389,6 +389,25 @@
         let currentView = 'all';
         let currentFolder = null;
         let sortAZ = false;
+        let inactivityTimer;
+        const INACTIVITY_LIMIT = 300000; // 5 minutes
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(lockVault, INACTIVITY_LIMIT);
+        }
+
+        function lockVault() {
+            window.location.href = 'index.html';
+        }
+
+        // Listen for activity
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, resetInactivityTimer, true);
+        });
+
+        // Initialize timer
+        resetInactivityTimer();
 
         function handleNewItem() {
             if (currentView === 'all') {

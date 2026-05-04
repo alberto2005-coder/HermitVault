@@ -74,7 +74,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 ## 🛠️ Próximas Mejoras (Roadmap)
 
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
-- [ ] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
+- [x] **Autobloqueo por Inactividad:** Bloqueo automático de la bóveda tras X minutos de inactividad.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
