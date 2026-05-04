@@ -9,31 +9,56 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
     <style>
-        body { margin: 0; padding: 0; background-color: #0f172a; }
+        :root {
+            --surface: #0f172a;
+            --surface-container: #1e293b;
+            --surface-container-high: #334155;
+            --primary: #8b5cf6;
+            --on-primary: #ffffff;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --text-sub: #64748b;
+            --border: rgba(255,255,255,0.05);
+            --bg-body: #0f172a;
+        }
+        body.light-mode {
+            --surface: #ffffff;
+            --surface-container: #f1f5f9;
+            --surface-container-high: #e2e8f0;
+            --text-main: #0f172a;
+            --text-dim: #475569;
+            --text-sub: #64748b;
+            --border: rgba(0,0,0,0.05);
+            --bg-body: #f8fafc;
+        }
+        body { margin: 0; padding: 0; background-color: var(--bg-body); color: var(--text-main); transition: background-color 0.3s, color 0.3s; }
         .hidden { display: none !important; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); }
+        .glass-panel { background: var(--surface); backdrop-filter: blur(12px); border-color: var(--border) !important; }
         .blur-overlay { backdrop-filter: blur(8px); background: rgba(0,0,0,0.4); }
-        .toast {
-            animation: slideIn 0.3s ease-out forwards;
-        }
+        .bg-slate-900 { background-color: var(--surface) !important; }
+        .bg-slate-950 { background-color: var(--surface-container) !important; }
+        .text-white { color: var(--text-main) !important; }
+        .text-slate-50 { color: var(--text-main) !important; }
+        .text-slate-400 { color: var(--text-dim) !important; }
+        .text-slate-500 { color: var(--text-sub) !important; }
+        .border-white\/5 { border-color: var(--border) !important; }
+        
+        main { background-color: var(--bg-body); color: var(--text-main); }
+        .bg-slate-900\/50 { background-color: var(--surface) !important; opacity: 0.8; }
+        .bg-slate-900\/40 { background-color: var(--surface) !important; opacity: 0.7; }
+        
+        .toast { animation: slideIn 0.3s ease-out forwards; }
         @keyframes slideIn {
             from { transform: translateY(100%) scale(0.9); opacity: 0; }
             to { transform: translateY(0) scale(1); opacity: 1; }
         }
-        :root {
-            --surface: #0f172a;
-            --surface-container-low: #1e293b;
-            --surface-container-high: #334155;
-            --primary: #8b5cf6;
-            --on-primary: #ffffff;
-            --on-surface: #f8fafc;
-            --on-surface-variant: #94a3b8;
-            --outline-variant: #334155;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#0f172a] text-slate-50 min-h-screen font-['Inter']">
+<body class="min-h-screen font-['Inter']">
     <!-- Sidebar Navigation -->
     <aside class="fixed left-0 top-0 h-full w-72 glass-panel border-r border-white/5 z-50 flex flex-col transition-all duration-300">
         <div class="p-8 flex items-center gap-4">
@@ -291,30 +316,60 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="modal-settings-el" class="fixed inset-0 z-[100] flex items-center justify-center blur-overlay hidden">
-        <div class="bg-slate-900 w-full max-w-md p-10 rounded-3xl border border-white/10 shadow-2xl">
-            <h2 class="text-2xl font-bold text-white mb-2">Vault Settings</h2>
-            <p class="text-slate-500 text-sm mb-8">Update your master security passphrase.</p>
+    <div id="modal-settings-el" class="fixed inset-0 z-[150] flex items-center justify-center blur-overlay hidden">
+        <div class="bg-slate-900 w-full max-w-lg p-10 rounded-[40px] border border-white/10 shadow-2xl">
+            <h2 class="text-3xl font-bold text-white mb-8">Vault Settings</h2>
             
-            <div class="space-y-6">
-                <div>
-                    <label class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block ml-2">New Master Password</label>
-                    <div class="relative">
-                        <input id="new-master-pass-el" oninput="checkStrength(this.value, 'strength-bar-master')" class="w-full bg-slate-950 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="Must be strong"/>
-                        <button onclick="togglePass('new-master-pass-el')" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
-                            <span id="new-master-pass-el-icon" class="material-symbols-outlined">visibility</span>
+            <div class="space-y-8 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+                <!-- Theme Selection -->
+                <div class="space-y-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-4">Appearance</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="setTheme('dark')" id="theme-dark-btn" class="p-4 bg-slate-950 border-2 border-purple-500 rounded-3xl flex flex-col items-center gap-2 transition-all">
+                            <span class="material-symbols-outlined text-purple-400">dark_mode</span>
+                            <span class="text-xs font-bold text-white">Dark Mode</span>
+                        </button>
+                        <button onclick="setTheme('light')" id="theme-light-btn" class="p-4 bg-slate-950 border-2 border-transparent rounded-3xl flex flex-col items-center gap-2 transition-all">
+                            <span class="material-symbols-outlined text-slate-500">light_mode</span>
+                            <span class="text-xs font-bold text-slate-400">Light Mode</span>
                         </button>
                     </div>
-                    <div class="mt-3 h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
-                        <div id="strength-bar-master" class="h-full w-0 transition-all duration-500 bg-red-500"></div>
+                </div>
+
+                <!-- Auto-Lock -->
+                <div class="space-y-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-4">Security: Auto-Lock</label>
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-white/5 flex items-center gap-4">
+                        <span class="material-symbols-outlined text-purple-400">timer</span>
+                        <div class="flex-1">
+                            <input id="setting-lock-time" type="number" min="1" max="60" class="bg-transparent border-none text-xl font-bold text-white w-20 outline-none focus:text-purple-400" value="5" onchange="updateInactivityLimit(this.value)" />
+                            <span class="text-sm text-slate-500 font-bold ml-2">minutes of inactivity</span>
+                        </div>
                     </div>
-                    <p id="settings-error-el" class="text-red-400 text-xs mt-3 ml-2 hidden"></p>
+                </div>
+
+                <!-- Change Password -->
+                <div class="space-y-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-4">Master Security</label>
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-white/5 space-y-4">
+                        <p class="text-xs text-slate-500 mb-2">Change your master passphrase (requires vault re-encryption).</p>
+                        <div class="relative">
+                            <input id="new-master-pass-el" oninput="checkStrength(this.value, 'strength-bar-master')" class="w-full bg-slate-900 border-none text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none" type="password" placeholder="New Master Password"/>
+                            <button onclick="togglePass('new-master-pass-el')" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-purple-400 transition-colors">
+                                <span id="new-master-pass-el-icon" class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                        <div class="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                            <div id="strength-bar-master" class="h-full w-0 transition-all duration-500 bg-red-500"></div>
+                        </div>
+                        <p id="settings-error-el" class="text-red-400 text-xs mt-3 ml-2 hidden"></p>
+                    </div>
                 </div>
             </div>
 
             <div class="flex gap-4 mt-10">
-                <button onclick="hideSettingsModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-white transition-all">Cancel</button>
-                <button onclick="changeMasterPass()" class="flex-1 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 hover:scale-[1.02] active:scale-95 transition-all">Update Vault</button>
+                <button onclick="hideSettingsModal()" class="flex-1 py-4 text-slate-400 font-bold hover:text-white transition-all">Close</button>
+                <button onclick="changeMasterPass()" class="flex-1 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg shadow-purple-600/20 hover:scale-[1.02] active:scale-95 transition-all">Update & Save</button>
             </div>
         </div>
     </div>
@@ -390,7 +445,10 @@
         let currentFolder = null;
         let sortAZ = false;
         let inactivityTimer;
-        const INACTIVITY_LIMIT = 300000; // 5 minutes
+        
+        // Settings Initialization
+        let INACTIVITY_LIMIT = parseInt(localStorage.getItem('hv-lock-time')) || 300000;
+        let currentTheme = localStorage.getItem('hv-theme') || 'dark';
 
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -401,12 +459,38 @@
             window.location.href = 'index.html';
         }
 
+        function updateInactivityLimit(mins) {
+            if (mins < 1) mins = 1;
+            INACTIVITY_LIMIT = mins * 60 * 1000;
+            localStorage.setItem('hv-lock-time', INACTIVITY_LIMIT);
+            resetInactivityTimer();
+            showToast(`Auto-lock set to ${mins} minutes`);
+        }
+
+        function setTheme(theme) {
+            const body = document.body;
+            const darkBtn = document.getElementById('theme-dark-btn');
+            const lightBtn = document.getElementById('theme-light-btn');
+            
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                if(lightBtn) lightBtn.className = "p-4 bg-slate-950 border-2 border-purple-500 rounded-3xl flex flex-col items-center gap-2 transition-all";
+                if(darkBtn) darkBtn.className = "p-4 bg-slate-950 border-2 border-transparent rounded-3xl flex flex-col items-center gap-2 transition-all opacity-50";
+            } else {
+                body.classList.remove('light-mode');
+                if(darkBtn) darkBtn.className = "p-4 bg-slate-950 border-2 border-purple-500 rounded-3xl flex flex-col items-center gap-2 transition-all";
+                if(lightBtn) lightBtn.className = "p-4 bg-slate-950 border-2 border-transparent rounded-3xl flex flex-col items-center gap-2 transition-all opacity-50";
+            }
+            localStorage.setItem('hv-theme', theme);
+        }
+
         // Listen for activity
         ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
             document.addEventListener(evt, resetInactivityTimer, true);
         });
 
-        // Initialize timer
+        // Initialize state
+        setTheme(currentTheme);
         resetInactivityTimer();
 
         function handleNewItem() {
@@ -1092,6 +1176,46 @@
                 } else {
                     showToast("Error deleting note", "error");
                 }
+            }
+        }
+        function showSettingsModal() {
+            document.getElementById('modal-settings-el').classList.remove('hidden');
+            // Sync UI with current settings
+            const mins = INACTIVITY_LIMIT / 60000;
+            document.getElementById('setting-lock-time').value = mins;
+            setTheme(localStorage.getItem('hv-theme') || 'dark');
+        }
+
+        function hideSettingsModal() {
+            document.getElementById('modal-settings-el').classList.add('hidden');
+            document.getElementById('new-master-pass-el').value = '';
+            document.getElementById('strength-bar-master').style.width = '0%';
+            document.getElementById('settings-error-el').classList.add('hidden');
+        }
+
+        async function changeMasterPass() {
+            const newPass = document.getElementById('new-master-pass-el').value;
+            const errorEl = document.getElementById('settings-error-el');
+            
+            if (!newPass) return;
+            
+            const strength = zxcvbn(newPass);
+            if (strength.score < 3) {
+                errorEl.innerText = "Password is too weak. Please use a stronger passphrase.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            showToast("Re-encrypting vault...");
+            const res = await window.pywebview.api.change_password(newPass);
+            
+            if (res === true) {
+                showToast("Master Password updated successfully!");
+                hideSettingsModal();
+            } else if (res === "ALREADY_SAME") {
+                showToast("New password is the same as the current one", "warning");
+            } else {
+                showToast("Failed to update password", "error");
             }
         }
     </script>

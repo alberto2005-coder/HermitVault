@@ -23,6 +23,8 @@
 - **🗑️ Papelera Inteligente:** Soporte para recuperación de tanto credenciales como notas borradas con confirmaciones de seguridad.
 - **🔍 Vista Unificada & Creación Rápida:** Panel global "All Items" para gestionar todo el contenido de un vistazo, incluyendo un **selector inteligente de tipo de item** al crear nuevos secretos.
 - **📂 Organización Contextual (Folders):** Sistema avanzado de carpetas y etiquetas que permite agrupar tanto contraseñas como notas bajo un mismo contexto (ej: Trabajo, Personal, Finanzas). Incluye **navegación unificada por carpeta** y auto-completado inteligente.
+- **🌗 Soporte de Temas (Modo Claro/Oscuro):** Interfaz adaptativa con selector de temas que permite alternar entre una estética Glassmorphism oscura y una vista clara profesional, con persistencia de preferencias.
+- **⚙️ Panel de Configuración Avanzado:** Control total sobre la seguridad y apariencia. Ajusta el **tiempo de autobloqueo**, cambia la **contraseña maestra** y gestiona el tema visual desde un menú centralizado.
 - **📊 Mejoras de UX:** Validaciones inteligentes al exportar a Excel, estados de carga visuales y notificaciones (toasts) interactivas para una experiencia fluida.
 
 ## 🛠️ Stack Tecnológico
@@ -75,6 +77,7 @@ Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para má
 ## 🛠️ Próximas Mejoras (Roadmap)
 
 - [ ] **Importación desde Navegadores:** Importar automáticamente desde archivos CSV de Chrome, Edge y Firefox.
+- [x] **Soporte de Temas (Modo Claro/Oscuro):** Implementación completa del selector de temas para adaptar la interfaz a diferentes entornos.
 
 ---
 Desarrollado con ❤️ por [Alberto](https://github.com/alberto2005-coder)
