@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 
-ITERATIONS = 480_000
+ITERATIONS = 600_000
 
 def derive_key(password: str, salt: bytes) -> bytes:
     """Derives a Fernet-compatible key from a password and salt."""

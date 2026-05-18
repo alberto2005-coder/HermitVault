@@ -1,6 +1,23 @@
 import json
 import os
+import re
 from crypto_logic import derive_key, encrypt_data, decrypt_data, generate_salt
+
+def sanitize_vault_name(name):
+    """Sanitizes the vault name to prevent path traversal."""
+    if not name:
+        return "vault"
+    # Take the base filename
+    base = os.path.basename(name)
+    # Strip dangerous characters
+    base = re.sub(r'[\\/:*?"<>|]', '', base)
+    # Remove directory traversal patterns
+    base = base.replace('..', '')
+    # Ensure it's not empty after stripping
+    if not base or base in ('.', '..'):
+        return "vault"
+    return base
+
 
 VAULT_FILE = "vault.vault"
 
@@ -13,11 +30,12 @@ def get_data_dir():
 
 class VaultManager:
     def __init__(self, vault_name="vault"):
-        self.vault_name = vault_name
+        self.vault_name = sanitize_vault_name(vault_name)
         self.data_dir = get_data_dir()
-        self.vault_file = os.path.join(self.data_dir, f"{vault_name}.vault")
+        self.vault_file = os.path.join(self.data_dir, f"{self.vault_name}.vault")
         self.salt = None
         self.key = None
+        self.master_password = None  # transient memory for sync key derivation
         self.data = []
         self.trash = []
         self.notes = []
@@ -36,6 +54,7 @@ class VaultManager:
         """Creates a new vault file with the master password."""
         self.salt = generate_salt()
         self.key = derive_key(master_password, self.salt)
+        self.master_password = master_password
         self.data = []
         self.trash = []
         self.save_vault()
@@ -54,6 +73,8 @@ class VaultManager:
             self.key = derive_key(master_password, self.salt)
             decrypted_json = decrypt_data(encrypted_payload, self.key)
             decoded = json.loads(decrypted_json)
+            
+            self.master_password = master_password
             
             # Handle old vaults or structure changes
             if isinstance(decoded, list):
@@ -86,9 +107,20 @@ class VaultManager:
         json_data = json.dumps(payload)
         encrypted_payload = encrypt_data(json_data, self.key)
         
-        with open(self.vault_file, "wb") as f:
-            f.write(self.salt)
-            f.write(encrypted_payload)
+        import tempfile
+        dir_name = os.path.dirname(self.vault_file)
+        try:
+            fd, temp_path = tempfile.mkstemp(dir=dir_name, prefix=".tmpvault")
+            with os.fdopen(fd, "wb") as f:
+                f.write(self.salt)
+                f.write(encrypted_payload)
+            # Atomic replace
+            os.replace(temp_path, self.vault_file)
+        except Exception as e:
+            if 'temp_path' in locals() and os.path.exists(temp_path):
+                try: os.remove(temp_path)
+                except: pass
+            raise e
 
     def add_credential(self, site, user, password, icon="", folder=""):
         import time
@@ -228,5 +260,6 @@ class VaultManager:
             
         self.salt = generate_salt()
         self.key = derive_key(new_password, self.salt)
+        self.master_password = new_password
         self.save_vault()
         return True
