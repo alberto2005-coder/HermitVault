@@ -16,27 +16,39 @@ class HermitAPI:
         self.security_file = os.path.join(self.data_dir, ".cache.dat")
         self._load_security_state()
         self.sync_manager = SyncManager()
+        self.sync_pin = None
 
     def _load_security_state(self):
-        import json, base64
+        import json, base64, uuid, hmac, hashlib
+        self.security_state = {"failed_attempts": 0, "lock_until": 0}
         if os.path.exists(self.security_file):
             try:
                 with open(self.security_file, "r") as f:
-                    # Simple obfuscation to prevent casual editing
-                    encoded_data = f.read()
-                    decoded_data = base64.b64decode(encoded_data).decode('utf-8')
-                    self.security_state = json.loads(decoded_data)
-            except:
-                self.security_state = {"failed_attempts": 0, "lock_until": 0}
-        else:
-            self.security_state = {"failed_attempts": 0, "lock_until": 0}
+                    content = f.read()
+                # Content has format signature:payload
+                if ":" in content:
+                    sig, encoded_data = content.split(":", 1)
+                    machine_id = str(uuid.getnode())
+                    expected_sig = hmac.new(machine_id.encode(), encoded_data.encode(), hashlib.sha256).hexdigest()
+                    if hmac.compare_digest(sig, expected_sig):
+                        decoded_data = base64.b64decode(encoded_data).decode('utf-8')
+                        self.security_state = json.loads(decoded_data)
+                    else:
+                        print("Security state tampered!")
+                        import time
+                        # Enforce immediate lockout
+                        self.security_state = {"failed_attempts": 5, "lock_until": int(time.time()) + 60}
+            except Exception as e:
+                print(f"Error loading security state: {e}")
 
     def _save_security_state(self):
-        import json, base64
+        import json, base64, uuid, hmac, hashlib
         data_str = json.dumps(self.security_state)
         encoded_data = base64.b64encode(data_str.encode('utf-8')).decode('utf-8')
+        machine_id = str(uuid.getnode())
+        sig = hmac.new(machine_id.encode(), encoded_data.encode(), hashlib.sha256).hexdigest()
         with open(self.security_file, "w") as f:
-            f.write(encoded_data)
+            f.write(f"{sig}:{encoded_data}")
 
     def get_security_state(self):
         import time
@@ -92,7 +104,12 @@ class HermitAPI:
 
     def get_credentials(self):
         if not self.vault_manager: return []
-        return self.vault_manager.get_credentials()
+        masked_creds = []
+        for c in self.vault_manager.get_credentials():
+            item = c.copy()
+            item["password"] = "••••••••"
+            masked_creds.append(item)
+        return masked_creds
 
     def get_all_items(self):
         if not self.vault_manager: return []
@@ -103,6 +120,7 @@ class HermitAPI:
             item = c.copy()
             item["type"] = "credential"
             item["original_index"] = i
+            item["password"] = "••••••••"
             new_creds.append(item)
         
         notes = self.vault_manager.get_notes()
@@ -114,6 +132,18 @@ class HermitAPI:
             new_notes.append(item)
         
         return new_creds + new_notes
+
+    def get_credential_password(self, index):
+        """Fetches the raw password on demand for copying or editing."""
+        if not self.vault_manager: return ""
+        try:
+            index = int(index)
+            creds = self.vault_manager.get_credentials()
+            if 0 <= index < len(creds):
+                return creds[index].get("password", "")
+        except Exception as e:
+            print(f"Error fetching password: {e}")
+        return ""
 
     def add_credential(self, site, user, password, icon="", folder=""):
         if not self.vault_manager: return False
@@ -202,7 +232,7 @@ class HermitAPI:
 
     def backup_vault(self):
         if not self.vault_manager or not self.current_vault: return False
-        src = f"{self.current_vault}.vault"
+        src = os.path.join(self.data_dir, f"{self.current_vault}.vault")
         if not os.path.exists(src): return False
         
         path = filedialog.asksaveasfilename(
@@ -223,7 +253,7 @@ class HermitAPI:
         if path:
             import shutil
             filename = os.path.basename(path)
-            dest = os.path.join(os.getcwd(), filename)
+            dest = os.path.join(self.data_dir, filename)
             shutil.copy2(path, dest)
             return True
         return False
@@ -305,15 +335,17 @@ class HermitAPI:
 
     def start_sync_server(self, port=None):
         if not self.current_vault: return {"success": False, "error": "No vault open"}
-        vault_path = f"{self.current_vault}.vault"
+        vault_path = os.path.join(self.data_dir, f"{self.current_vault}.vault")
         
         def on_done(msg):
             print(f"Sync server: {msg}")
             
         try:
             p = int(port) if port else None
-            self.sync_manager.start_server(vault_path, on_done, p)
-            return {"success": True, "msg": "Sync server started"}
+            import secrets
+            self.sync_pin = "".join(secrets.choice("0123456789") for _ in range(6))
+            self.sync_manager.start_server(vault_path, self.sync_pin, on_done, p)
+            return {"success": True, "msg": "Sync server started", "pin": self.sync_pin}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -322,8 +354,9 @@ class HermitAPI:
             return self.sync_manager.stop_server()
         return False
 
-    def connect_to_sync(self, target_ip, port=None):
+    def connect_to_sync(self, target_ip, pin, port=None):
         if not self.vault_manager: return {"success": False, "error": "Open vault first"}
+        if not pin or len(pin) != 6: return {"success": False, "error": "Pairing PIN must be 6 digits"}
         
         def on_data(data):
             if isinstance(data, str) and data.startswith("Error"):
@@ -331,13 +364,14 @@ class HermitAPI:
                 return
             
             try:
-                # Assuming the received vault has the same master password as the current one
                 # We need the salt from the received data (first 16 bytes)
                 remote_salt = data[:16]
                 remote_encrypted = data[16:]
                 
-                from crypto_logic import decrypt_data
-                decrypted_json = decrypt_data(remote_encrypted, self.vault_manager.key)
+                # Securely derive decryption key using local master password and remote salt
+                from crypto_logic import derive_key, decrypt_data
+                remote_key = derive_key(self.vault_manager.master_password, remote_salt)
+                decrypted_json = decrypt_data(remote_encrypted, remote_key)
                 remote_payload = json.loads(decrypted_json)
                 
                 remote_creds = remote_payload.get("data", [])
@@ -375,7 +409,7 @@ class HermitAPI:
 
         try:
             p = int(port) if port else None
-            self.sync_manager.receive_vault(target_ip, on_data, p)
+            self.sync_manager.receive_vault(target_ip, pin, on_data, p)
             return {"success": True, "msg": "Connection established, waiting for data..."}
         except Exception as e:
             return {"success": False, "error": str(e)}
