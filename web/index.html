@@ -5,15 +5,11 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="tailwindcss.js"></script>
     <link rel="icon" type="image/png" href="logo.png">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+    <link href="fonts.css" rel="stylesheet" />
+    <link href="material-symbols.css" rel="stylesheet" />
+    <script src="zxcvbn.js"></script>
     <style>
         body {
             margin: 0;
@@ -290,13 +286,23 @@
     <div class="fixed inset-0 z-[-1] opacity-20 grayscale pointer-events-none">
         <img class="w-full h-full object-cover"
             data-alt="A highly detailed close-up of complex server circuitry and glowing data pathways in a dark datacenter environment. The visual style is high-fidelity and futuristic, featuring deep slate and obsidian tones with subtle purple and white light emissions. The mood is secure, professional, and technologically advanced, echoing a premium cybersecurity vault aesthetic with crisp lines and soft bokeh in the background."
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKUFRQijmOGmp2GDoM9NAZskMZgqGPDHo1CfVngr14HMT3-LVzJj-UyPXbsoch-1HX5WFSRQGqSd6IvNQqknjFMw9PxdXdCVsNsJI0CRx4nCF440VQ6UIe_PmGNd_fXmfZqsSDgq5b06IsucALjsNs0rFo-qykf_2yi8dcctF13AXNN9B4vyAUCGSgZ7ifX9ng9BYy0C5SLKkc3nA6UDhQKopIfLcWF9yZlExjJ5SVPcFym29Mjy7mEXP2ltGGjgOVt_SOypnQ9Tk" />
+            src="background.jpg" />
     </div>
     <script>
         let currentTab = 'unlock';
         let lockUntil = 0;
         let isVerified = true;
         let verifyTarget = 0;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         async function init() {
             // Load theme
@@ -305,8 +311,12 @@
 
             if (window.pywebview && window.pywebview.api) {
                 const state = await window.pywebview.api.get_security_state();
-                if (state.lock_until > Date.now() / 1000) {
-                    lockUntil = state.lock_until * 1000;
+                lockUntil = state.lock_until;
+                if (state.lock_until > 0) {
+                    const now = Math.floor(Date.now() / 1000);
+                    if (state.lock_until > now) {
+                        isLocked = true;
+                    }
                 }
                 
                 if (state.failed_attempts >= 2) {
@@ -317,7 +327,7 @@
                 const select = document.getElementById('vault-select-el');
                 if (select) {
                     if (vaults.length > 0) {
-                        select.innerHTML = vaults.map(v => `<option value="${v}">${v}</option>`).join('');
+                        select.innerHTML = vaults.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
                     } else {
                         select.innerHTML = '<option value="">No vaults found. Create one!</option>';
                     }

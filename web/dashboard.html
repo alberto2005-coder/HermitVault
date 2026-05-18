@@ -5,13 +5,10 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <link rel="icon" type="image/png" href="logo.png">
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+    <script src="tailwindcss.js"></script>
+    <link href="fonts.css" rel="stylesheet" />
+    <link href="material-symbols.css" rel="stylesheet" />
+    <script src="zxcvbn.js"></script>
     <style>
         :root {
             --surface: #0f172a;
@@ -297,12 +294,16 @@
                             Be a Host (Send)
                         </button>
                         <div id="sync-status-el"
-                            class="hidden flex items-center gap-3 bg-purple-500/10 px-6 py-4 rounded-full border border-purple-500/30">
-                            <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-                            <span class="text-purple-400 font-bold text-sm">HOSTING ACTIVE</span>
+                            class="hidden flex flex-col md:flex-row items-center gap-4 bg-purple-500/10 px-6 py-4 rounded-3xl border border-purple-500/30">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                                <span class="text-purple-400 font-bold text-sm">HOSTING ACTIVE</span>
+                                <span class="text-white text-sm font-semibold ml-4">
+                                    Pairing PIN: <span id="sync-active-pin" class="font-mono text-lg text-purple-300 font-bold tracking-widest">------</span>
+                                </span>
+                            </div>
                             <button onclick="stopSyncServer()"
-                                class="ml-4 text-xs bg-purple-500 hover:bg-purple-400 text-white px-4 py-2 rounded-full transition-all">STOP
-                                HOSTING</button>
+                                class="w-full md:w-auto text-xs bg-purple-500 hover:bg-purple-400 text-white px-4 py-2 rounded-full transition-all">STOP HOSTING</button>
                         </div>
                     </div>
 
@@ -311,6 +312,9 @@
                             <input id="sync-target-ip"
                                 class="flex-[3] bg-slate-950 border border-white/5 text-white rounded-2xl md:rounded-l-3xl md:rounded-r-none px-8 py-4 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
                                 placeholder="Enter Host IP (e.g. 192.168.1.10)" />
+                            <input id="sync-pairing-pin"
+                                class="flex-[2] bg-slate-950 border border-white/5 text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-purple-500/50 outline-none text-center font-mono tracking-widest text-lg transition-all"
+                                placeholder="6-digit PIN" maxlength="6" />
                             <input id="sync-target-port"
                                 class="flex-1 bg-slate-950 border border-white/5 text-slate-400 rounded-2xl md:rounded-r-3xl md:rounded-l-none px-4 py-4 focus:ring-2 focus:ring-purple-500/50 outline-none text-center transition-all"
                                 placeholder="Port" value="5555" />
@@ -853,6 +857,16 @@
             refreshVault();
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         async function updateFolderList() {
             const creds = await window.pywebview.api.get_credentials();
             const notes = await window.pywebview.api.get_notes();
@@ -874,12 +888,12 @@
                 const baseClass = "text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 rounded-full mx-4 px-8 py-3 flex items-center gap-3 transition-all cursor-pointer text-sm";
 
                 list.innerHTML += `
-                    <a onclick="switchFolder('${f}')" class="${isActive ? activeClass : baseClass}">
+                    <a onclick="switchFolder(this.dataset.folder)" data-folder="${escapeHtml(f)}" class="${isActive ? activeClass : baseClass}">
                         <span class="material-symbols-outlined text-sm">${isActive ? 'folder_open' : 'folder'}</span>
-                        <span class="truncate">${f}</span>
+                        <span class="truncate">${escapeHtml(f)}</span>
                     </a>
                 `;
-                datalist.innerHTML += `<option value="${f}">`;
+                datalist.innerHTML += `<option value="${escapeHtml(f)}">`;
             });
 
             if (folders.size === 0) {
@@ -895,15 +909,17 @@
             const cards = creds.map((c, i) => {
                 const isNote = c.type === 'note' || c.trash_type === 'note';
                 const icon = isNote ? 'description' : 'shield_person';
-                const title = isNote ? (c.title || 'Untitled Note') : c.site;
-                const subtitle = isNote ? 'Secure Note' : c.user;
+                const rawTitle = isNote ? (c.title || 'Untitled Note') : c.site;
+                const rawSubtitle = isNote ? 'Secure Note' : c.user;
+                const title = escapeHtml(rawTitle);
+                const subtitle = escapeHtml(rawSubtitle);
                 const idx = (c.original_index !== undefined) ? c.original_index : i;
 
                 return `
                 <div class="glass-panel p-8 rounded-[32px] border border-white/5 hover:border-purple-500/40 transition-all duration-500 group relative">
                     <div class="flex justify-between items-start mb-8">
                         <div class="w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden border border-white/5 group-hover:scale-110 transition-transform">
-                            ${!isNote && c.icon ? `<img src="${c.icon}" class="w-full h-full object-cover" onerror="this.src='';this.innerHTML='<span class=\\'material-symbols-outlined text-purple-500\\'>shield</span>'"/>` : `<span class="material-symbols-outlined text-purple-500">${icon}</span>`}
+                            ${!isNote && c.icon ? `<img src="${escapeHtml(c.icon)}" class="w-full h-full object-cover" onerror="this.src='';this.innerHTML='<span class=\\'material-symbols-outlined text-purple-500\\'>shield</span>'"/>` : `<span class="material-symbols-outlined text-purple-500">${icon}</span>`}
                         </div>
                         <div class="flex gap-2">
                             ${(currentView === 'all' || currentView === 'notes' || currentView === 'passwords') ? `
@@ -924,7 +940,7 @@
                                 View Note
                             </button>
                         ` : `
-                            <button onclick="copyToClipboard('${c.password}')" class="flex-1 py-3 bg-slate-950 hover:bg-slate-900 text-slate-300 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+                            <button onclick="copyPasswordAtIndex(${idx})" class="flex-1 py-3 bg-slate-950 hover:bg-slate-900 text-slate-300 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-sm">content_copy</span>
                                 Copy Password
                             </button>
@@ -1049,9 +1065,30 @@
             });
         }
 
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text);
-            showToast("Password copied to clipboard");
+        async function copyPasswordAtIndex(idx) {
+            try {
+                const password = await window.pywebview.api.get_credential_password(idx);
+                if (!password) {
+                    showToast("No password found", "error");
+                    return;
+                }
+                
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(password);
+                    showToast("Password copied to clipboard");
+                } else {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = password;
+                    textarea.style.position = "fixed";
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                    showToast("Password copied to clipboard");
+                }
+            } catch (err) {
+                showToast("Failed to copy password", "error");
+            }
         }
 
         async function exportExcel() {
@@ -1060,8 +1097,16 @@
                 showToast("Nothing to export! Your vault is empty.", "error");
                 return;
             }
-            const success = await window.pywebview.api.export_excel();
-            if (success) showToast("Vault exported to Excel successfully");
+            
+            askConfirm(
+                "Export Unencrypted Passwords?",
+                "WARNING: This will write all your sites, usernames, and passwords to an UNENCRYPTED Excel file on your disk. Anyone with access to this file can view them. Are you sure you want to proceed?",
+                "Yes, Export",
+                async () => {
+                    const success = await window.pywebview.api.export_excel();
+                    if (success) showToast("Vault exported to Excel successfully");
+                }
+            );
         }
 
         async function backupVault() {
@@ -1076,13 +1121,14 @@
             document.getElementById('modal-add-el').classList.remove('hidden');
         }
 
-        function editCred(i) {
+        async function editCred(i) {
             const c = allCredentials[i];
+            const password = await window.pywebview.api.get_credential_password(i);
             document.getElementById('modal-title-el').innerText = 'Edit Credential';
             document.getElementById('edit-index-el').value = i;
             document.getElementById('add-site-el').value = c.site;
             document.getElementById('add-user-el').value = c.user;
-            document.getElementById('add-pass-el').value = c.password;
+            document.getElementById('add-pass-el').value = password;
             document.getElementById('add-icon-el').value = c.icon || '';
             document.getElementById('add-folder-el').value = c.folder || '';
             document.getElementById('modal-add-el').classList.remove('hidden');
@@ -1222,6 +1268,7 @@
             const res = await window.pywebview.api.start_sync_server(port);
             if (res.success) {
                 showToast(`Broadcasting on port ${port}! Other devices can now connect.`);
+                document.getElementById('sync-active-pin').innerText = res.pin;
                 document.getElementById('sync-status-el').classList.remove('hidden');
                 document.getElementById('start-host-btn').classList.add('hidden');
                 document.getElementById('sync-client-section').classList.add('hidden');
@@ -1250,11 +1297,13 @@
 
         async function connectToSync() {
             const ip = document.getElementById('sync-target-ip').value;
+            const pin = document.getElementById('sync-pairing-pin').value;
             const port = document.getElementById('sync-target-port').value;
             if (!ip) return showToast("Enter target IP address", "error");
+            if (!pin || pin.length !== 6) return showToast("Enter a valid 6-digit Pairing PIN", "error");
 
-            showToast("Connecting to peer...");
-            const res = await window.pywebview.api.connect_to_sync(ip, port);
+            showToast("Connecting to peer and authenticating...");
+            const res = await window.pywebview.api.connect_to_sync(ip, pin, port);
             if (res.success) {
                 showToast("Vault synced and merged!");
                 refreshVault();
