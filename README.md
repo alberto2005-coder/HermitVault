@@ -89,6 +89,66 @@ HermitVault utiliza un sistema de almacenamiento persistente para garantizar que
 
 ---
 
+## 🛡️ Auditoría y Mitigación de Vulnerabilidades (Mayo 2026)
+
+En mayo de 2026, el código de **HermitVault** se sometió a una exhaustiva auditoría de seguridad para elevarlo de un prototipo de desarrollo a un estándar de grado de producción altamente seguro (escalando de una calificación inicial no apta para MVP a una arquitectura robusta de nivel empresarial). 
+
+Se identificaron y mitigaron por completo las siguientes 12 vulnerabilidades críticas de seguridad y estabilidad:
+
+### 1. Autenticación Robusta en Sincronización P2P
+* **Vulnerabilidad:** El servidor de sincronización escuchaba en todas las interfaces (`0.0.0.0`) y transmitía el archivo `.vault` cifrado a cualquier dispositivo que se conectara al puerto, sin token, TLS ni emparejamiento.
+* **Solución:** Se implementó un flujo de **emparejamiento con PIN aleatorio de 6 dígitos**. El servidor anfitrión genera un código PIN de un solo uso criptográficamente seguro y lo muestra en pantalla; el cliente debe enviar el PIN correcto para autenticarse antes de que se inicie la transferencia de datos.
+
+### 2. Prevención de Inyección HTML y Cross-Site Scripting (XSS)
+* **Vulnerabilidad:** El renderizado de tarjetas de credenciales y carpetas en el WebView utilizaba interpolaciones directas con `innerHTML` sobre entradas de usuario no sanitizadas (título, sitio, usuario, contraseña), permitiendo la inyección de JS malicioso capaz de invocar comandos privilegiados del sistema operativo a través del bridge de Python.
+* **Solución:** Se implementó una función de sanitización global `escapeHtml()` en el frontend. Se eliminó la inyección directa de texto no sanitizado, y las acciones en los elementos (como copiar o editar) pasaron a usar referencias por índices seguros (`dataset` y números enteros) en lugar de cadenas de texto crudas.
+
+### 3. Cero Exposición de Credenciales en Memoria JS/DOM
+* **Vulnerabilidad:** Las llamadas del bridge `get_all_items()` y `get_credentials()` entregaban la base de datos completamente descifrada (incluyendo contraseñas en texto plano) al contexto JS del frontend, manteniéndolas en la memoria del DOM y exponiéndolas a accesos no autorizados en tiempo de ejecución.
+* **Solución:** Arquitectura de **descifrado bajo demanda**. Las llamadas globales del bridge ahora devuelven contraseñas enmascaradas (`••••••••`). Se implementó un endpoint seguro `get_credential_password(index)` en el backend de Python que descifra y entrega individualmente la contraseña **únicamente** cuando el usuario hace clic explícito en "Copiar" o "Editar".
+
+### 4. Mitigación de Path Traversal en Creación/Carga de Vaults
+* **Vulnerabilidad:** La concatenación directa de `vault_name` permitía realizar Path Traversal (ej. `../../archivo`) al crear o abrir bóvedas, permitiendo leer y escribir archivos arbitrarios fuera del directorio central de datos.
+* **Solución:** Se implementó el helper `sanitize_vault_name()` en `vault_storage.py` y `bridge.py` que remueve secuencias peligrosas (`..`, `/`, `\`) y restringe los nombres estrictamente a nombres de archivos válidos dentro de la carpeta central de datos.
+
+### 5. Funcionamiento 100% Offline (Independencia de CDNs)
+* **Vulnerabilidad:** La aplicación cargaba hojas de estilo de Tailwind CSS, fuentes de Google Fonts, iconos de Material Symbols y librerías de fuerza de contraseñas (`zxcvbn.js`) desde CDNs externos, rompiendo la premisa de funcionamiento offline y exponiendo al usuario a posibles ataques de secuestro de red (MITM) o caídas de conexión.
+* **Solución:** Se descargaron y empaquetaron localmente todas las librerías CSS, JavaScript y tipografías directamente en la carpeta `/web`, garantizando que la aplicación cargue al 100% de manera aislada y local.
+
+### 6. Criptografía Conforme a Estándares FIPS y OWASP (KDF)
+* **Vulnerabilidad:** El cifrado derivaba la clave mediante PBKDF2-HMAC-SHA256 con 480,000 iteraciones, por debajo de las 600,000 recomendadas por OWASP para entornos criptográficos conformes a FIPS en almacenamiento local.
+* **Solución:** Se incrementaron las iteraciones de la función KDF en `crypto_logic.py` a **600,000 iteraciones**, incrementando drásticamente el costo computacional de cualquier ataque de fuerza bruta offline.
+
+### 7. Firmado Criptográfico con UUID de Estado Anti-Fuerza Bruta
+* **Vulnerabilidad:** La información de intentos fallidos y bloqueos en `.cache.dat` se guardaba con una simple codificación Base64, lo que permitía a un atacante borrar o alterar el archivo para reiniciar instantáneamente los contadores de bloqueo.
+* **Solución:** El archivo de estado `.cache.dat` ahora se **firma digitalmente con un HMAC-SHA256 utilizando una clave única derivada del identificador de hardware del sistema (UUID del procesador/placa)**. Cualquier intento de alteración o falta de coincidencia en la firma bloquea defensivamente la interfaz por 60 segundos por seguridad.
+
+### 8. Advertencia de Exportación Plaintext a Excel
+* **Vulnerabilidad:** La función de exportar a Excel escribía credenciales y contraseñas completas en texto plano en disco sin ningún tipo de advertencia previa.
+* **Solución:** Se añadió un **cuadro de confirmación interactivo de alto impacto (Modal)** que alerta detalladamente sobre los riesgos de seguridad que implica almacenar contraseñas sin cifrar en disco antes de procesar el archivo.
+
+### 9. Escrituras Atómicas contra la Corrupción de Datos
+* **Vulnerabilidad:** `save_vault()` escribía directamente sobre el archivo de bóveda activo mediante un flujo `open("wb")` síncrono. Si la aplicación se cerraba inesperadamente, se congelaba el hilo o se cortaba la energía del disco a mitad del proceso, la bóveda completa del usuario se corrompía y se perdía para siempre.
+* **Solución:** Se implementó una **escritura transaccional atómica**. La aplicación escribe los datos de la bóveda en un archivo temporal seguro (`.tmpvault`) en el mismo directorio de datos y, una vez completada la escritura de forma exitosa, realiza una sustitución atómica instantánea (`os.replace`) sobre el archivo original.
+
+### 10. Corrección de Rutas en Operaciones de Importación/Backup
+* **Vulnerabilidad:** Las funciones `backup_vault()` e `import_vault()` operaban sobre el directorio de trabajo del proceso (`os.getcwd()`) en lugar del directorio de datos configurado centralmente (`~/HermitVault`), lo que provocaba errores fatales o pérdida de archivos según desde dónde se iniciara la aplicación.
+* **Solución:** Se reestructuraron todos los accesos a disco para resolver rutas sistemáticamente a través del helper unificado `get_data_dir()`.
+
+### 11. Robustez del Protocolo de Red (DoS y Salt Cryptographic Alignment)
+* **Vulnerabilidad:** 
+  1. `receive_vault()` leía flujos de red acumulando datos recursivamente en memoria en base a la cabecera de tamaño recibida de 4 bytes sin límites, exponiendo a la aplicación a ataques DoS por agotamiento de memoria.
+  2. Al conectarse en sincronización, el cliente intentaba descifrar la base de datos remota usando la clave local derivada con su propia sal local, lo cual rompía la sincronización de cualquier bóveda que utilizara una sal aleatoria distinta (incluso teniendo la misma contraseña maestra).
+* **Solución:** 
+  1. Se limitó el tamaño máximo de flujo de red a **50 MB** y se establecieron **timeouts de red de 15 segundos** en sockets de lectura.
+  2. Se almacenó temporalmente de forma segura en memoria la contraseña maestra ingresada al abrir la bóveda y se re-derivó la clave de descifrado del cliente utilizando la **sal específica de la bóveda remota** recibida, logrando un proceso de descifrado y fusión criptográficamente correcto.
+
+### 12. Entornos de Construcción Deterministas y Reproducibles
+* **Vulnerabilidad:** El archivo `requirements.txt` usaba operadores abiertos (`>=`) y el instalador instalaba PyInstaller en tiempo real, lo que rompía la reproducibilidad de los binarios ante actualizaciones de dependencias de terceros.
+* **Solución:** Se congelaron y fijaron todas las dependencias con sus versiones exactas y estables (`pywebview==5.0.1`, `cryptography==42.0.5`, `pyinstaller==6.5.0`, etc.) en `requirements.txt` y se adaptó `build_exe.bat` para evitar la instalación dinámica.
+
+---
+
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
